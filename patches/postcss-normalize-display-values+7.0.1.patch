@@ -1,0 +1,94 @@
+diff --git a/node_modules/postcss-normalize-display-values/src/index.js b/node_modules/postcss-normalize-display-values/src/index.js
+index 7495e57..9ea99cb 100644
+--- a/node_modules/postcss-normalize-display-values/src/index.js
++++ b/node_modules/postcss-normalize-display-values/src/index.js
+@@ -1,71 +1,28 @@
+-'use strict';
+-const valueParser = require('postcss-value-parser');
+-const mappings = require('./lib/map.js');
++'use strict'
+ 
+-/**
+- * @param {string} value
+- * @return {string}
+- */
+-function transform(value) {
+-  const { nodes } = valueParser(value);
++const valueParser = require('postcss-value-parser')
++const combinations = require('./lib/map')
+ 
+-  if (nodes.length === 1) {
+-    return value;
+-  }
+-
+-  const values = nodes
+-    .filter((list, index) => index % 2 === 0)
++const cleanTokens = (value) => {
++  const ast = valueParser(value)
++  return ast.nodes
+     .filter((node) => node.type === 'word')
+-    .map((n) => n.value.toLowerCase());
+-
+-  if (values.length === 0) {
+-    return value;
+-  }
+-
+-  const match = mappings.get(values.toString());
+-
+-  if (!match) {
+-    return value;
+-  }
+-
+-  return match;
++    .map((node) => node.value.toLowerCase())
+ }
+ 
+-/**
+- * @type {import('postcss').PluginCreator<void>}
+- * @return {import('postcss').Plugin}
+- */
+-function pluginCreator() {
++module.exports = () => {
+   return {
+     postcssPlugin: 'postcss-normalize-display-values',
+-
+-    prepare() {
+-      const cache = new Map();
+-      return {
+-        OnceExit(css) {
+-          css.walkDecls(/^display$/i, (decl) => {
+-            const value = decl.value;
+-
+-            if (!value) {
+-              return;
+-            }
+-
+-            if (cache.has(value)) {
+-              decl.value = cache.get(value);
+-
+-              return;
+-            }
+-
+-            const result = transform(value);
+-
+-            decl.value = result;
+-            cache.set(value, result);
+-          });
+-        },
+-      };
++    Declaration(decl) {
++      if (decl.prop.toLowerCase() !== 'display') return
++      const words = cleanTokens(decl.value)
++      if (!words.length) return
++      const normalized = combinations.get(words.toString())
++      if (normalized) {
++        decl.value = normalized
++      }
+     },
+-  };
++  }
+ }
+ 
+-pluginCreator.postcss = true;
+-module.exports = pluginCreator;
++module.exports.postcss = true
