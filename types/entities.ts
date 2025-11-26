@@ -1,4 +1,5 @@
-export type UserRole = 'user' | 'admin'
+export type UserRole = 'user' | 'seller' | 'admin'
+export type AuthProvider = 'local' | 'google' | 'github'
 
 export interface BaseEntity {
   _id: string
@@ -10,6 +11,8 @@ export interface UserProfile extends BaseEntity {
   username: string
   email: string
   role: UserRole
+  provider: AuthProvider
+  avatarUrl?: string
 }
 
 export interface Game extends BaseEntity {

@@ -83,6 +83,8 @@ export const serializeUser = (doc: any): UserProfile => ({
   username: doc.username,
   email: doc.email,
   role: doc.role,
+  provider: doc.provider || 'local',
+  avatarUrl: doc.avatarUrl,
   createdAt: doc.createdAt?.toISOString?.() ?? new Date().toISOString(),
   updatedAt: doc.updatedAt?.toISOString?.() ?? new Date().toISOString(),
 })

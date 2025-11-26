@@ -7,7 +7,8 @@ import { useCatalogStore } from '~/stores/catalog'
 declare const definePageMeta: (meta: Record<string, any>) => void
 declare const confirm: (message?: string) => boolean
 
-definePageMeta({ middleware: ['auth', 'admin'] })
+// Allow both sellers and admins to manage services
+definePageMeta({ middleware: ['auth', 'seller'] })
 
 const nuxtApp = useNuxtApp()
 const fetcher = nuxtApp.$fetch as typeof $fetch

@@ -11,6 +11,8 @@ export const useAuthStore = defineStore(
 
     const isAuthenticated = computed(() => Boolean(user.value))
     const isAdmin = computed(() => user.value?.role === 'admin')
+    const isSeller = computed(() => user.value?.role === 'seller' || user.value?.role === 'admin')
+    const isOAuthUser = computed(() => user.value?.provider !== 'local')
 
     const fetchProfile = async () => {
       const data = await $fetch<UserProfile | null>('/api/auth/me')
@@ -79,6 +81,8 @@ export const useAuthStore = defineStore(
       error,
       isAuthenticated,
       isAdmin,
+      isSeller,
+      isOAuthUser,
       fetchProfile,
       login,
       register,
