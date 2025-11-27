@@ -25,11 +25,17 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install only production dependencies
-RUN npm ci --only=production
+# Copy patches directory for patch-package
+COPY patches ./patches
+
+# Install all dependencies (needed for postinstall script)
+RUN npm ci
 
 # Copy built application from builder
 COPY --from=builder /app/.output /app/.output
+
+# Remove dev dependencies after build
+RUN npm prune --production
 
 # Expose the application port
 EXPOSE 3000
