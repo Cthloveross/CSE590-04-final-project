@@ -117,7 +117,7 @@ jobs:
     name: Deploy to Staging
     needs: [build, test-unit, test-e2e]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push' && vars.STAGING_SERVER != ''
     environment:
       name: staging
       url: http://staging.yourdomain.com
@@ -147,7 +147,7 @@ jobs:
     name: Deploy to Production
     needs: [build, test-unit, test-e2e]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.PRODUCTION_SERVER != ''
     environment:
       name: production
       url: https://yourdomain.com
