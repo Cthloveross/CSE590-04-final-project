@@ -233,3 +233,4 @@ node scripts/seed.mjs
 - ✅ **Role-based access control** (different features per role)
 
 Happy boosting! 🎮
+# Demo commit
