@@ -12,6 +12,7 @@ export interface UserDocument extends Document {
   provider: AuthProvider
   providerId?: string
   avatarUrl?: string
+  walletBalance: number
   createdAt: Date
   updatedAt: Date
 }
@@ -25,6 +26,7 @@ const userSchema = new Schema<UserDocument>(
     provider: { type: String, enum: ['local', 'google', 'github'], default: 'local' },
     providerId: { type: String, required: false },
     avatarUrl: { type: String, required: false },
+    walletBalance: { type: Number, default: 1000, min: 0 },
   },
   { timestamps: true }
 )

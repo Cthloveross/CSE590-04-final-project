@@ -24,21 +24,13 @@ const services = computed(() => {
   if (typeFilter.value !== 'all') {
     list = list.filter((svc) => svc.type === typeFilter.value)
   }
-  return [...list].sort((a, b) => (sort.value === 'asc' ? a.currentBid - b.currentBid : b.currentBid - a.currentBid))
+  return [...list].sort((a, b) => (sort.value === 'asc' ? a.price - b.price : b.price - a.price))
 })
 
-const formatTimeRemaining = (endTime: string) => {
-  const now = new Date()
-  const end = new Date(endTime)
-  const diff = end.getTime() - now.getTime()
-  
-  if (diff <= 0) return 'Ended'
-  
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-  
-  if (days > 0) return `${days}d ${hours}h left`
-  return `${hours}h left`
+const getStockStatus = (quantity: number) => {
+  if (quantity === 0) return { text: 'Out of Stock', color: 'text-red-400' }
+  if (quantity <= 5) return { text: `Only ${quantity} left!`, color: 'text-yellow-400' }
+  return { text: `${quantity} in stock`, color: 'text-emerald-400' }
 }
 </script>
 
@@ -47,8 +39,8 @@ const formatTimeRemaining = (endTime: string) => {
     <header class="flex flex-col gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-6 md:flex-row md:items-center md:justify-between">
       <div>
         <p class="text-sm uppercase tracking-widest text-brand-light">{{ game?.name }}</p>
-        <h1 class="text-3xl font-semibold text-white">Auctions for {{ game?.name || slug }}</h1>
-        <p class="text-sm text-slate-400">Browse active auctions. Place your bid to compete for premium services.</p>
+        <h1 class="text-3xl font-semibold text-white">Shop for {{ game?.name || slug }}</h1>
+        <p class="text-sm text-slate-400">Browse available services and add them to your cart.</p>
       </div>
       <div class="flex flex-wrap gap-3 text-sm">
         <label class="flex items-center gap-2">
@@ -64,8 +56,8 @@ const formatTimeRemaining = (endTime: string) => {
         <label class="flex items-center gap-2">
           Sort
           <select v-model="sort" class="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2">
-            <option value="asc">Bid: Low → High</option>
-            <option value="desc">Bid: High → Low</option>
+            <option value="asc">Price: Low → High</option>
+            <option value="desc">Price: High → Low</option>
           </select>
         </label>
       </div>
@@ -85,12 +77,14 @@ const formatTimeRemaining = (endTime: string) => {
         <p class="text-sm text-slate-400">{{ service.description }}</p>
         <div class="flex items-center justify-between">
           <div class="flex flex-col">
-            <span class="text-2xl font-semibold text-white">${{ service.currentBid }}</span>
-            <span class="text-xs text-slate-500">{{ service.bidCount }} bid{{ service.bidCount === 1 ? '' : 's' }}</span>
+            <span class="text-2xl font-semibold text-white">${{ service.price }}</span>
+            <span class="text-xs text-slate-500">per service</span>
           </div>
           <div class="flex flex-col items-end">
-            <span class="text-sm font-medium text-brand-light">{{ formatTimeRemaining(service.auctionEndTime) }}</span>
-            <span class="text-xs text-slate-400">Tap to bid →</span>
+            <span class="text-sm font-medium" :class="getStockStatus(service.stockQuantity).color">
+              {{ getStockStatus(service.stockQuantity).text }}
+            </span>
+            <span class="text-xs text-slate-400">View details →</span>
           </div>
         </div>
       </NuxtLink>

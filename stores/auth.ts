@@ -16,6 +16,8 @@ export const useAuthStore = defineStore(
 
     const fetchProfile = async () => {
       const data = await $fetch<UserProfile | null>('/api/auth/me')
+      console.log('💰 fetchProfile received data:', data)
+      console.log('💰 walletBalance in response:', data?.walletBalance)
       user.value = data
       return data
     }

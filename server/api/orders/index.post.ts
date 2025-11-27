@@ -5,6 +5,8 @@ import { checkoutSchema } from '~/server/schemas/order'
 import { connectToDatabase } from '~/server/utils/db'
 import { CartItemModel } from '~/server/models/CartItem'
 import { OrderModel } from '~/server/models/Order'
+import { ServiceModel } from '~/server/models/Service'
+import { UserModel } from '~/server/models/User'
 import { toOrder } from '~/server/utils/serializers'
 
 export default defineEventHandler(async (event) => {
@@ -26,11 +28,10 @@ export default defineEventHandler(async (event) => {
     if (!service || !service.gameId) {
       throw createError({ statusCode: 400, statusMessage: 'Cart is outdated, please refresh' })
     }
-    const unitPrice = service.currentBid ?? service.startingPrice ?? 0
     return {
       serviceId: service._id,
       title: service.title,
-      price: unitPrice,
+      price: service.price ?? 0,
       quantity: item.quantity,
       type: service.type,
       game: {
@@ -42,6 +43,30 @@ export default defineEventHandler(async (event) => {
   })
 
   const totalPrice = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+
+  // Check user has sufficient balance
+  const userDoc = await UserModel.findById(user._id)
+  if (!userDoc) {
+    throw createError({ statusCode: 401, statusMessage: 'User not found' })
+  }
+  if (userDoc.walletBalance < totalPrice) {
+    throw createError({ statusCode: 400, statusMessage: `Insufficient balance. You have $${userDoc.walletBalance}, but need $${totalPrice}` })
+  }
+
+  // Atomically decrement stock for each service and check availability
+  for (const item of orderItems) {
+    const result = await ServiceModel.findOneAndUpdate(
+      { _id: item.serviceId, stockQuantity: { $gte: item.quantity } },
+      { $inc: { stockQuantity: -item.quantity } },
+      { new: true }
+    )
+    if (!result) {
+      throw createError({ statusCode: 400, statusMessage: `Not enough stock for "${item.title}". Please refresh and try again.` })
+    }
+  }
+
+  // Deduct wallet balance
+  await UserModel.findByIdAndUpdate(user._id, { $inc: { walletBalance: -totalPrice } })
 
   const order = await OrderModel.create({
     userId: user._id,

@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAsyncData, useNuxtApp } from 'nuxt/app'
+import { useAsyncData } from 'nuxt/app'
 import type { Order } from '~/types/entities'
 
 declare const definePageMeta: (meta: Record<string, any>) => void
 
 definePageMeta({ middleware: 'auth' })
 
-const nuxtApp = useNuxtApp()
-const fetcher = nuxtApp.$fetch as typeof $fetch
 const orders = ref<Order[]>([])
 const loading = ref(true)
 const errorMessage = ref('')
@@ -17,7 +15,7 @@ const { refresh } = await useAsyncData('orders', async () => {
   loading.value = true
   errorMessage.value = ''
   try {
-    const response = await fetcher<Order[]>('/api/orders')
+    const response = await $fetch<Order[]>('/api/orders')
     orders.value = response
     return response
   } catch (err: any) {

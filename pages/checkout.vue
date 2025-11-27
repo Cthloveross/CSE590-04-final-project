@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue'
-import { useAsyncData, useNuxtApp, navigateTo } from 'nuxt/app'
+import { useAsyncData, navigateTo } from 'nuxt/app'
 import { useCartStore } from '~/stores/cart'
+import { useAuthStore } from '~/stores/auth'
 
 declare const definePageMeta: (meta: Record<string, any>) => void
 
 definePageMeta({ middleware: 'auth' })
 
 const cart = useCartStore()
-const nuxtApp = useNuxtApp()
-const fetcher = nuxtApp.$fetch as typeof $fetch
+const auth = useAuthStore()
 const message = ref('')
 const submitting = ref(false)
 
@@ -39,7 +39,7 @@ const submitOrder = async () => {
   submitting.value = true
   message.value = ''
   try {
-    await fetcher('/api/orders', {
+    await $fetch('/api/orders', {
       method: 'POST',
       body: {
         gameHandle: form.gameHandle,
@@ -48,6 +48,8 @@ const submitOrder = async () => {
         ...(form.notes ? { notes: form.notes } : {}),
       },
     })
+    // Refresh user profile to update wallet balance
+    await auth.fetchProfile()
     cart.clear()
     await navigateTo('/orders?alert=success')
   } catch (err: any) {

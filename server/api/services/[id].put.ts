@@ -18,26 +18,12 @@ export default defineEventHandler(async (event) => {
   const update: Record<string, any> = {
     gameId: payload.gameId,
     title: payload.title,
+    price: payload.price,
+    stockQuantity: payload.stockQuantity ?? 10,
     type: payload.type,
     description: payload.description,
     imageUrl: payload.imageUrl,
     isActive: payload.isActive ?? true,
-  }
-
-  if (payload.bidCount !== undefined) {
-    update.bidCount = payload.bidCount
-  }
-
-  if (payload.startingPrice !== undefined || payload.price !== undefined) {
-    update.startingPrice = payload.startingPrice ?? payload.price
-  }
-
-  if (payload.currentBid !== undefined || payload.price !== undefined) {
-    update.currentBid = payload.currentBid ?? payload.price
-  }
-
-  if (payload.auctionEndTime) {
-    update.auctionEndTime = new Date(payload.auctionEndTime)
   }
 
   const updated = await ServiceModel.findByIdAndUpdate(id, update, { new: true })

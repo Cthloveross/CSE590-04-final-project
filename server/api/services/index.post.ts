@@ -10,15 +10,11 @@ export default defineEventHandler(async (event) => {
   await requireAdmin(event)
   await connectToDatabase()
   const payload = await parseBody(event, upsertServiceSchema)
-  const now = new Date()
-  const defaultEnd = payload.auctionEndTime ? new Date(payload.auctionEndTime) : new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
   const servicePayload = {
     gameId: payload.gameId,
     title: payload.title,
-    startingPrice: payload.startingPrice ?? payload.price,
-    currentBid: payload.currentBid ?? payload.price,
-    auctionEndTime: defaultEnd,
-    bidCount: payload.bidCount ?? 0,
+    price: payload.price,
+    stockQuantity: payload.stockQuantity ?? 10,
     type: payload.type,
     description: payload.description,
     imageUrl: payload.imageUrl,

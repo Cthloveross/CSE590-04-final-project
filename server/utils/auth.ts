@@ -13,9 +13,9 @@ interface TokenPayload {
   role: string
 }
 
-export const hashPassword = (password: string) => bcrypt.hash(password, 12)
+export const hashUserPassword = (password: string) => bcrypt.hash(password, 12)
 
-export const verifyPassword = (password: string, hash: string) => bcrypt.compare(password, hash)
+export const verifyUserPassword = (password: string, hash: string) => bcrypt.compare(password, hash)
 
 const signJwt = (payload: TokenPayload, expiresIn: string) => {
   const config = useRuntimeConfig()
@@ -85,6 +85,7 @@ export const serializeUser = (doc: any): UserProfile => ({
   role: doc.role,
   provider: doc.provider || 'local',
   avatarUrl: doc.avatarUrl,
+  walletBalance: doc.walletBalance ?? 1000,
   createdAt: doc.createdAt?.toISOString?.() ?? new Date().toISOString(),
   updatedAt: doc.updatedAt?.toISOString?.() ?? new Date().toISOString(),
 })

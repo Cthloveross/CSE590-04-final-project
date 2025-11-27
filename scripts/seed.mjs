@@ -38,6 +38,7 @@ const UserSchema = new Schema({
   email: String,
   passwordHash: String,
   role: String,
+  walletBalance: { type: Number, default: 1000 },
 }, { timestamps: true })
 
 const GameSchema = new Schema({
@@ -50,11 +51,8 @@ const GameSchema = new Schema({
 const ServiceSchema = new Schema({
   gameId: { type: Schema.Types.ObjectId, ref: 'Game' },
   title: String,
-  startingPrice: Number,
-  currentBid: Number,
-  auctionEndTime: Date,
-  highestBidder: { type: Schema.Types.ObjectId, ref: 'User' },
-  bidCount: Number,
+  price: Number,
+  stockQuantity: { type: Number, default: 10 },
   type: String,
   description: String,
   imageUrl: String,
@@ -95,43 +93,38 @@ const sampleGames = [
 const sampleServicesPerGame = [
   {
     title: '30 Level Boost - Bronze to Silver',
-    startingPrice: 50,
-    currentBid: 50,
+    price: 50,
+    stockQuantity: 15,
     type: 'boosting',
     description: 'Professional booster will level up your account by 30 levels. Estimated completion: 3-5 days.',
-    bidCount: 0,
   },
   {
     title: '50 Level Boost - Silver to Gold',
-    startingPrice: 80,
-    currentBid: 80,
+    price: 80,
+    stockQuantity: 10,
     type: 'boosting',
     description: 'Guaranteed rank increase from Silver to Gold with win-rate tracking. Fast delivery.',
-    bidCount: 0,
   },
   {
     title: '2-Hour Premium Coaching Session',
-    startingPrice: 40,
-    currentBid: 40,
+    price: 40,
+    stockQuantity: 20,
     type: 'coaching',
     description: 'Live 1-on-1 coaching from pro players with VOD review, tactical advice, and personalized training plan.',
-    bidCount: 0,
   },
   {
     title: 'Full Season Placement Matches (10 games)',
-    startingPrice: 90,
-    currentBid: 90,
+    price: 90,
+    stockQuantity: 8,
     type: 'placement',
     description: 'Expert players will complete your placement matches to get you the best possible starting rank.',
-    bidCount: 0,
   },
   {
     title: 'Weekend Rank Grind Package',
-    startingPrice: 150,
-    currentBid: 150,
+    price: 150,
+    stockQuantity: 5,
     type: 'custom',
     description: 'Unlimited boosting hours during the weekend (Fri-Sun) to maximize your rank gains.',
-    bidCount: 0,
   },
 ]
 
@@ -157,8 +150,9 @@ async function seed() {
       email: 'admin@example.com',
       passwordHash: adminPasswordHash,
       role: 'admin',
+      walletBalance: 1000,
     })
-    console.log(`✅ Admin user created: ${admin.email} / admin12345\n`)
+    console.log(`✅ Admin user created: ${admin.email} / admin12345 (Balance: $1000)\n`)
 
     // Create regular user
     console.log('👤 Creating test user...')
@@ -168,42 +162,35 @@ async function seed() {
       email: 'user@example.com',
       passwordHash: userPasswordHash,
       role: 'user',
+      walletBalance: 1000,
     })
-    console.log(`✅ Test user created: ${user.email} / user12345\n`)
+    console.log(`✅ Test user created: ${user.email} / user12345 (Balance: $1000)\n`)
 
     // Create games and services
-    console.log('🎮 Creating games and auction services...')
+    console.log('🎮 Creating games and services...')
     for (const gameData of sampleGames) {
       const game = await Game.create(gameData)
       console.log(`  ✓ ${game.name}`)
 
-      // Create auction services for this game
+      // Create services for this game
       for (const serviceData of sampleServicesPerGame) {
-        // Set auction end time to 7 days from now
-        const auctionEndTime = new Date()
-        auctionEndTime.setDate(auctionEndTime.getDate() + 7)
-        
         await Service.create({
           ...serviceData,
           gameId: game._id,
           isActive: true,
-          auctionEndTime,
         })
       }
     }
     console.log(`✅ Created ${sampleGames.length} games with ${sampleServicesPerGame.length} services each\n`)
 
-    console.log(`✅ Created ${sampleGames.length} games with ${sampleServicesPerGame.length} auction services each\n`)
-
     console.log('✅ Seed completed successfully!\n')
     console.log('📋 Summary:')
-    console.log(`  - Admin: admin@example.com / admin12345`)
-    console.log(`  - User:  user@example.com / user12345`)
+    console.log(`  - Admin: admin@example.com / admin12345 ($1000)`)
+    console.log(`  - User:  user@example.com / user12345 ($1000)`)
     console.log(`  - Games: ${sampleGames.length}`)
-    console.log(`  - Auction Services: ${sampleGames.length * sampleServicesPerGame.length}`)
-    console.log(`  - Auction Duration: 7 days from now`)
+    console.log(`  - Services: ${sampleGames.length * sampleServicesPerGame.length} (with stock quantities)`)
     console.log('\n🚀 Run `npm run dev` and visit http://localhost:3000')
-    console.log('💰 Users can now bid on services - highest bidder wins!')
+    console.log('� Users can now browse the shop and place orders!')
 
   } catch (error) {
     console.error('❌ Seed failed:', error)

@@ -76,13 +76,15 @@ const features = [
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </NuxtLink>
-            <NuxtLink 
-              v-if="!auth.isAuthenticated"
-              to="/login" 
-              class="inline-flex items-center gap-2 rounded-xl border border-white/20 px-6 py-3 font-semibold text-white transition-all hover:bg-white/5 hover:border-white/30"
-            >
-              Sign in to bid
-            </NuxtLink>
+            <ClientOnly>
+              <NuxtLink 
+                v-if="!auth.isAuthenticated"
+                to="/login" 
+                class="inline-flex items-center gap-2 rounded-xl border border-white/20 px-6 py-3 font-semibold text-white transition-all hover:bg-white/5 hover:border-white/30"
+              >
+                Sign in to shop
+              </NuxtLink>
+            </ClientOnly>
           </div>
 
           <div class="flex items-center gap-8 pt-4">
@@ -218,13 +220,15 @@ const features = [
         >
           Start Shopping
         </NuxtLink>
-        <NuxtLink 
-          v-if="!auth.isAuthenticated"
-          to="/login" 
-          class="rounded-xl border border-white/20 px-8 py-3 font-semibold text-white transition-all hover:bg-white/5"
-        >
-          Create Account
-        </NuxtLink>
+        <ClientOnly>
+          <NuxtLink 
+            v-if="!auth.isAuthenticated"
+            to="/login" 
+            class="rounded-xl border border-white/20 px-8 py-3 font-semibold text-white transition-all hover:bg-white/5"
+          >
+            Create Account
+          </NuxtLink>
+        </ClientOnly>
       </div>
     </div>
   </section>

@@ -3,7 +3,7 @@ import { loginSchema } from '~/server/schemas/auth'
 import { parseBody } from '~/server/utils/validation'
 import { connectToDatabase } from '~/server/utils/db'
 import { UserModel } from '~/server/models/User'
-import { setAuthCookie, verifyPassword } from '~/server/utils/auth'
+import { setAuthCookie, verifyUserPassword } from '~/server/utils/auth'
 import { toUserProfile } from '~/server/utils/serializers'
 
 export default defineEventHandler(async (event) => {
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Invalid credentials' })
   }
 
-  const valid = await verifyPassword(body.password, user.passwordHash)
+  const valid = await verifyUserPassword(body.password, user.passwordHash)
   console.log('🔑 Password valid:', valid)
   
   if (!valid) {

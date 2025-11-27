@@ -9,7 +9,7 @@ const cart = useCartStore()
 const route = useRoute()
 const links = [
   { name: 'Catalog', to: '/' },
-  { name: 'Auctions', to: '/games/cs2' },
+  { name: 'Shop', to: '/games/cs2' },
   { name: 'Orders', to: '/orders', auth: true },
   { name: 'Sell', to: '/admin/services', seller: true },
   { name: 'Admin', to: '/admin/orders', admin: true },
@@ -36,6 +36,8 @@ const shouldShowLink = (link: typeof links[0]) => {
 onMounted(async () => {
   isHydrated.value = true
   await auth.fetchProfile().catch(() => undefined)
+  console.log('💰 User data after profile fetch:', auth.user)
+  console.log('💰 Wallet balance:', auth.user?.walletBalance)
   if (auth.isAuthenticated) {
     await cart.load().catch(() => undefined)
   }
@@ -106,7 +108,7 @@ const getRoleBadge = (role: string) => {
         <nav class="flex items-center gap-1">
           <template v-for="link in links" :key="link.to">
             <NuxtLink
-              v-if="shouldShowLink(link)"
+              v-if="isHydrated && shouldShowLink(link)"
               :to="link.to"
               class="rounded-lg px-3 py-2 text-sm font-medium transition-all hover:bg-white/5"
               :class="{ 
@@ -118,6 +120,14 @@ const getRoleBadge = (role: string) => {
             </NuxtLink>
           </template>
           
+          <!-- Wallet Balance -->
+          <div v-if="isHydrated && auth.isAuthenticated" class="mr-2 flex items-center gap-2 rounded-lg bg-brand/10 px-3 py-1.5 border border-brand/20">
+            <svg class="h-4 w-4 text-brand-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-sm font-semibold text-brand-light">${{ (auth.user?.walletBalance ?? 0).toFixed(2) }}</span>
+          </div>
+
           <!-- Cart -->
           <NuxtLink
             to="/cart"

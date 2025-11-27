@@ -13,6 +13,7 @@ export interface UserProfile extends BaseEntity {
   role: UserRole
   provider: AuthProvider
   avatarUrl?: string
+  walletBalance: number
 }
 
 export interface Game extends BaseEntity {
@@ -29,11 +30,7 @@ export interface Service extends BaseEntity {
   game?: Pick<Game, '_id' | 'slug' | 'name' | 'iconUrl'>
   title: string
   price: number
-  startingPrice: number
-  currentBid: number
-  auctionEndTime: string
-  highestBidder?: string
-  bidCount: number
+  stockQuantity: number
   type: ServiceType
   description: string
   imageUrl?: string
