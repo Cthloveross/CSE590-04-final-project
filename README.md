@@ -1,8 +1,8 @@
 # GameBoost - CS2 Services Marketplace (Nuxt 3 + MongoDB Atlas)
 
-A **CS2 game services marketplace** where authenticated users can browse listings, bid on auctions, and purchase boosting/coaching services. Sellers can create and manage their own listings. Built with Nuxt 3 + Tailwind on the client, Nitro APIs backed by MongoDB/Mongoose, Zod validation, JWT auth with **OAuth (Google & GitHub)**, and Pinia stores that run during SSR.
+A **CS2 game services marketplace** with **CI/CD pipeline** where authenticated users can browse listings, bid on auctions, and purchase boosting/coaching services. Sellers can create and manage their own listings. Built with Nuxt 3 + Tailwind on the client, Nitro APIs backed by MongoDB/Mongoose, Zod validation, JWT auth with **OAuth (Google & GitHub)**, and Pinia stores that run during SSR.
 
-> **TL;DR** – Full-featured marketplace with OAuth login, role-based access control (buyer/seller/admin), shopping cart, and auction system.
+> **TL;DR** – Full-featured marketplace with OAuth login, role-based access control (buyer/seller/admin), shopping cart, auction system, and automated CI/CD with GitHub Actions.
 
 ## ✅ Features Implemented
 
@@ -19,6 +19,13 @@ A **CS2 game services marketplace** where authenticated users can browse listing
 - **Order Management** – Place orders with game credentials, track order status
 - **Seller Dashboard** – Create/edit/delete service listings (sellers & admins only)
 
+### CI/CD Pipeline
+- **GitHub Actions Workflow** – Automated build, test, and deployment
+- **Docker Containerization** – Multi-stage Dockerfile for optimized production builds
+- **Automated Testing** – Unit tests (Vitest) and E2E tests (Playwright)
+- **Container Registry** – Automatic image push to GitHub Container Registry (ghcr.io)
+- **Deployment Ready** – Optional SSH deployment to staging/production servers
+
 ### UI/UX
 - **Responsive Nuxt UI** with Tailwind CSS
 - **Modern dark theme** with gaming aesthetic
@@ -33,32 +40,43 @@ A **CS2 game services marketplace** where authenticated users can browse listing
 | State | Pinia (`auth`, `catalog`, `cart`) with persisted auth/cart and SSR-safe fetch |
 | APIs | Nitro server routes under `server/api/*`, Zod validation, JWT middleware |
 | Auth | nuxt-auth-utils for OAuth, custom JWT for sessions |
-| Data | MongoDB Atlas (or local Mongo), Mongoose models |
+| Data | MongoDB Atlas (cloud database), Mongoose models |
 | Tooling | Node 22+, npm, Vitest |
 
 ## 🛠 Prerequisites
 
 - **Node.js 22+** (tested on 22.11)
 - **npm 10+** (ships with Node)
-- **MongoDB** – Atlas cluster or local MongoDB 6.x
+- **MongoDB Atlas** – Cloud database (free M0 cluster available)
 - **OAuth Apps** – Google Cloud Console + GitHub OAuth app (for OAuth login)
 
 ## 🚀 Quick Start
 
 ```bash
-# 1. Install dependencies
+# 1. Clone the repository
+git clone https://github.com/Cthloveross/CSE590-04-final-project.git
+cd CSE590-04-final-project
+
+# 2. Install dependencies
 npm install
 
-# 2. Copy env template and configure
+# 3. Install Playwright browsers (for E2E tests)
+npx playwright install
+
+# 4. Configure environment variables
 cp .env.example .env
+# Edit .env with your MongoDB Atlas URI and OAuth credentials
 
-# 3. Configure OAuth (see OAuth Setup below)
-# Edit .env with your OAuth credentials
+# 5. Set up MongoDB Atlas (REQUIRED)
+# - Visit https://cloud.mongodb.com/
+# - Navigate to Network Access → Add IP Address
+# - Add your current IP or allow from anywhere (0.0.0.0/0) for development
+# - Wait 1-2 minutes for the change to take effect
 
-# 4. Seed demo data
+# 6. Seed the database
 node scripts/seed.mjs
 
-# 5. Start dev server
+# 7. Start development server
 npm run dev
 ```
 
@@ -109,28 +127,74 @@ Generate a secure session password (at least 32 characters) for cookie encryptio
 NUXT_SESSION_PASSWORD=your-super-secret-session-password-at-least-32-chars
 ```
 
-## 🌐 MongoDB Atlas Setup
+## 🌐 MongoDB Setup
 
-The repo ships with an Atlas URI in `.env.example`. To use:
+### ⚠️ Important: This Project Uses MongoDB Atlas ONLY
 
-1. **Copy the env file** – `cp .env.example .env`
-2. **Append a database name** – e.g. `...mongodb.net/game-services?retryWrites=true&w=majority`
-3. **Whitelist your IP** – In Atlas: *Security → Network Access*
-4. **Run the seed** – `node scripts/seed.mjs`
+This project is configured to use **MongoDB Atlas** (cloud database) exclusively. Local MongoDB is not supported.
 
-### Using Local MongoDB
+### Setup Steps
 
-```bash
-# macOS
-brew services start mongodb-community@6.0
+1. **Create MongoDB Atlas Account**
+   - Visit [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+   - Sign up for a free account
 
-# Docker
-docker run --name game-shop-mongo -p 27017:27017 -d mongo:6.0
+2. **Create a Cluster**
+   - Create a free M0 cluster (sufficient for development)
+   - Choose your preferred cloud provider and region
 
-# Set env
-export MONGODB_URI="mongodb://127.0.0.1:27017/game-services"
-node scripts/seed.mjs
+3. **Configure Network Access** (CRITICAL)
+   - Navigate to **Network Access** in the left sidebar
+   - Click **Add IP Address**
+   - Choose one of:
+     - **Add Current IP Address** (recommended for security)
+     - **Allow Access from Anywhere** (`0.0.0.0/0` - convenient for development)
+   - Click **Confirm**
+   - ⏱️ Wait 1-2 minutes for changes to take effect
+
+4. **Create Database User**
+   - Navigate to **Database Access**
+   - Click **Add New Database User**
+   - Create a user with **Read and Write** permissions
+   - Save the username and password
+
+5. **Get Connection String**
+   - Go back to **Database** view
+   - Click **Connect** on your cluster
+   - Choose **Connect your application**
+   - Copy the connection string
+   - Replace `<password>` with your actual password
+   - Replace `<dbname>` with `game-services`
+
+6. **Update `.env` File**
+   ```env
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/game-services?retryWrites=true&w=majority
+   ```
+
+7. **Seed the Database**
+   ```bash
+   node scripts/seed.mjs
+   ```
+
+### ✅ Expected Output
 ```
+🌱 Starting database seed...
+✅ Connected to MongoDB Atlas
+✅ Database cleared
+✅ Created 2 games
+✅ Created 2 users
+✅ Created 3 services
+✅ Database seeded successfully!
+```
+
+### ❌ Common Issues
+
+| Error | Solution |
+|-------|----------|
+| "Could not connect to any servers" | Add your IP to Atlas Network Access whitelist |
+| "Authentication failed" | Check username/password in connection string |
+| "Database name not specified" | Ensure `/game-services` is in the URI |
+| Connection timeout | Wait 1-2 minutes after adding IP to whitelist |
 
 ## 📋 REST API Endpoints
 
@@ -172,9 +236,76 @@ node scripts/seed.mjs
 | Start dev server | `npm run dev` |
 | Build production | `npm run build` |
 | Preview production | `npm run preview` |
-| Run tests | `npm run test` |
+| Run unit tests | `npm run test` |
+| Run E2E tests | `npm run test:e2e` |
+| Run E2E tests (UI mode) | `npm run test:e2e:ui` |
 | Regenerate types | `npx nuxi prepare` |
 | Seed database | `node scripts/seed.mjs` |
+
+## 🐳 Docker Commands
+
+| Task | Command |
+| --- | --- |
+| Build Docker image | `docker build -t game-shop .` |
+| Run with Docker Compose | `docker-compose up -d` |
+| Stop Docker Compose | `docker-compose down` |
+| Rebuild and restart | `docker-compose up --build -d` |
+| View logs | `docker-compose logs -f app` |
+
+**Note**: Docker Compose uses MongoDB Atlas from your `.env` file. Ensure:
+- `.env` file exists with valid `MONGODB_URI`
+- Your IP is whitelisted in MongoDB Atlas
+- All OAuth credentials are set
+
+## 🚀 CI/CD Pipeline
+
+This project includes a complete GitHub Actions CI/CD pipeline:
+
+### Pipeline Stages
+
+1. **Build** – Builds Docker image and pushes to GitHub Container Registry
+2. **Test (Unit)** – Runs Vitest unit tests
+3. **Test (E2E)** – Runs Playwright end-to-end tests across multiple browsers
+4. **Deploy** – Optional SSH deployment to staging/production (requires server configuration)
+
+### Triggering the Pipeline
+
+The pipeline automatically runs on:
+- Push to `main` or `develop` branches
+- Pull requests to `main` or `develop`
+
+### GitHub Actions Setup
+
+The workflow is defined in `.github/workflows/ci-cd.yml`. No additional setup required for build and test stages.
+
+For deployment (optional):
+1. Go to repository **Settings → Secrets and variables → Actions**
+2. Add the following secrets:
+   - `SSH_PRIVATE_KEY` – SSH private key for deployment
+   - `STAGING_SERVER` – Staging server hostname
+   - `STAGING_USER` – SSH user for staging
+   - `PRODUCTION_SERVER` – Production server hostname
+   - `PRODUCTION_USER` – SSH user for production
+
+### Docker Registry
+
+Built images are automatically pushed to:
+```
+ghcr.io/cthloveross/cse590-04-final-project:latest
+ghcr.io/cthloveross/cse590-04-final-project:main
+```
+
+To pull and run:
+```bash
+docker pull ghcr.io/cthloveross/cse590-04-final-project:latest
+docker run -p 3000:3000 --env-file .env ghcr.io/cthloveross/cse590-04-final-project:latest
+```
+
+### CI/CD Documentation
+
+For detailed CI/CD setup and demo instructions, see:
+- **[CI_CD_SETUP.md](CI_CD_SETUP.md)** – Complete setup guide
+- **[DEMO_GUIDE.md](DEMO_GUIDE.md)** – Step-by-step demo instructions
 
 ## 📁 Project Structure
 
@@ -218,10 +349,37 @@ node scripts/seed.mjs
 
 | Symptom | Fix |
 | --- | --- |
-| OAuth redirect error | Ensure redirect URIs match exactly in OAuth provider settings |
-| `fetcher is not a function` | Clear caches: `rm -rf .nuxt .output node_modules/.vite && npm run dev` |
-| Hydration mismatch | Clear browser cache after pulling updates |
-| Mongo connection fails | Check `.env` has valid URI and your IP is whitelisted |
+| **MongoDB connection fails** | 1. Check Atlas IP whitelist<br>2. Verify credentials in `.env`<br>3. Wait 1-2 minutes after adding IP<br>4. Ensure database name is `game-services` |
+| **OAuth redirect error** | Ensure redirect URIs match exactly in OAuth provider settings |
+| **`fetcher is not a function`** | Clear caches: `rm -rf .nuxt .output node_modules/.vite && npm install && npm run dev` |
+| **Hydration mismatch** | Clear browser cache, restart dev server |
+| **Docker build fails** | Ensure `.env` file exists and `MONGODB_URI` is set |
+| **E2E tests fail** | Run `npx playwright install` to install browser dependencies |
+| **Session password error** | Ensure `NUXT_SESSION_PASSWORD` is at least 32 characters |
+
+### MongoDB Atlas Specific Issues
+
+```bash
+# Test MongoDB connection
+node -e "
+const mongoose = require('mongoose');
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('✅ MongoDB Atlas connected successfully!');
+    process.exit(0);
+  })
+  .catch(err => {
+    console.error('❌ Connection failed:', err.message);
+    process.exit(1);
+  });
+"
+```
+
+### Getting Help
+
+1. Check MongoDB Atlas connection: https://cloud.mongodb.com/
+2. Review CI/CD logs: https://github.com/Cthloveross/CSE590-04-final-project/actions
+3. See detailed setup: [CI_CD_SETUP.md](CI_CD_SETUP.md)
 
 ## 📝 Course Requirements Met
 
@@ -231,6 +389,34 @@ node scripts/seed.mjs
 - ✅ **Multiple authenticated users** (buyer/seller/admin roles)
 - ✅ **OAuth/OIDC** (Google + GitHub login)
 - ✅ **Role-based access control** (different features per role)
+- ✅ **CI/CD Pipeline** (GitHub Actions with Docker build, automated testing, and deployment)
+- ✅ **Containerization** (Docker + Docker Compose for local and production deployment)
+- ✅ **Automated Testing** (Unit tests with Vitest, E2E tests with Playwright)
+
+## 📊 Project Statistics
+
+- **Lines of Code**: ~5,000+
+- **API Endpoints**: 20+
+- **Database Models**: 6 (User, Game, Service, Order, CartItem, Bid)
+- **Test Coverage**: Unit + E2E tests
+- **CI/CD Stages**: Build → Test → Deploy
+- **Supported Browsers**: Chrome, Firefox, Safari, Mobile Chrome, Mobile Safari
+
+## 🔒 Security Features
+
+- JWT authentication with httpOnly cookies
+- Password hashing with bcrypt
+- OAuth 2.0 integration (Google + GitHub)
+- Role-based access control (RBAC)
+- Input validation with Zod schemas
+- MongoDB injection protection
+- CORS configuration
+- Environment variable security
+
+## 📚 Additional Documentation
+
+- **[CI_CD_SETUP.md](CI_CD_SETUP.md)** – Complete CI/CD setup and configuration guide
+- **[DEMO_GUIDE.md](DEMO_GUIDE.md)** – Step-by-step instructions for CI/CD demos
+- **[docs/architecture.md](docs/architecture.md)** – System architecture documentation
 
 Happy boosting! 🎮
-# Demo commit

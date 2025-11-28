@@ -28,7 +28,13 @@ try {
   console.warn('⚠️  No .env file found, using defaults')
 }
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/game-shop'
+const MONGODB_URI = process.env.MONGODB_URI
+
+if (!MONGODB_URI) {
+  console.error('❌ Error: MONGODB_URI is not set in .env file')
+  console.log('Please set MONGODB_URI in your .env file to your MongoDB Atlas connection string')
+  process.exit(1)
+}
 
 // Schema definitions
 const { Schema } = mongoose
