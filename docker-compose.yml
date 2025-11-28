@@ -12,8 +12,11 @@ services:
       - NODE_ENV=production
       # Use Atlas MongoDB from .env file
       - MONGODB_URI=${MONGODB_URI}
+      - NUXT_MONGODB_URI=${NUXT_MONGODB_URI}
       - JWT_SECRET=${JWT_SECRET:-production-secret-change-me}
+      - NUXT_JWT_SECRET=${NUXT_JWT_SECRET:-production-secret-change-me}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - NUXT_JWT_EXPIRES_IN=${NUXT_JWT_EXPIRES_IN:-7d}
       - NUXT_SESSION_PASSWORD=${NUXT_SESSION_PASSWORD}
       - NUXT_OAUTH_GOOGLE_CLIENT_ID=${NUXT_OAUTH_GOOGLE_CLIENT_ID}
       - NUXT_OAUTH_GOOGLE_CLIENT_SECRET=${NUXT_OAUTH_GOOGLE_CLIENT_SECRET}
