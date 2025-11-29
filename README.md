@@ -256,7 +256,7 @@ This project is configured to use **MongoDB Atlas** (cloud database) exclusively
 
 | Task | Command |
 | --- | --- |
-| Build Docker image | `docker build -t game-shop .` |
+| Build Docker image | `docker build -t gaming-platform:latest .` |
 | Run with Docker Compose | `docker-compose up -d` |
 | Stop Docker Compose | `docker-compose down` |
 | Rebuild and restart | `docker-compose up --build -d` |
@@ -266,6 +266,54 @@ This project is configured to use **MongoDB Atlas** (cloud database) exclusively
 - `.env` file exists with valid `MONGODB_URI`
 - Your IP is whitelisted in MongoDB Atlas
 - All OAuth credentials are set
+
+## ☸️ Kubernetes Deployment
+
+This project supports deployment to Kubernetes. See [k8s/README.md](k8s/README.md) for detailed instructions.
+
+### Quick Start (Docker Desktop Kubernetes)
+
+```bash
+# 1. Enable Kubernetes in Docker Desktop
+# Docker Desktop → Settings → Kubernetes → Enable Kubernetes
+
+# 2. Build Docker image with Socket.IO URL
+docker build \
+  --build-arg NUXT_PUBLIC_SOCKET_URL=http://localhost:30001 \
+  --build-arg NUXT_PUBLIC_SITE_URL=http://localhost:30000 \
+  -t gaming-platform:latest .
+
+# 3. Update secrets (edit k8s/secrets.yaml with your credentials)
+
+# 4. Deploy to Kubernetes
+kubectl apply -k k8s/
+
+# 5. Check deployment status
+kubectl get all -n gaming-platform
+```
+
+### Access the Application
+
+| Service | URL |
+| --- | --- |
+| Application | http://localhost:30000 |
+| Socket.IO Server | http://localhost:30001 |
+
+### Useful Kubernetes Commands
+
+```bash
+# View pod logs
+kubectl logs -f deployment/gaming-platform-app -n gaming-platform
+
+# Scale deployment
+kubectl scale deployment gaming-platform-app --replicas=3 -n gaming-platform
+
+# Restart deployment
+kubectl rollout restart deployment/gaming-platform-app -n gaming-platform
+
+# Delete all resources
+kubectl delete -k k8s/
+```
 
 ## 🚀 CI/CD Pipeline
 
@@ -426,7 +474,7 @@ mongoose.connect(process.env.MONGODB_URI)
 
 ## 📚 Additional Documentation
 
-- **[SOCKET_IO.md](SOCKET_IO.md)** – Complete Socket.IO implementation guide and API reference
+- **[k8s/README.md](k8s/README.md)** – Complete Kubernetes deployment guide
 - **[CI_CD_SETUP.md](CI_CD_SETUP.md)** – Complete CI/CD setup and configuration guide
 - **[DEMO_GUIDE.md](DEMO_GUIDE.md)** – Step-by-step instructions for CI/CD demos
 - **[docs/architecture.md](docs/architecture.md)** – System architecture documentation
