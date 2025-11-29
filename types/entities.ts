@@ -23,7 +23,7 @@ export interface Game extends BaseEntity {
   description: string
 }
 
-export type ServiceType = 'boosting' | 'coaching' | 'placement' | 'custom'
+export type ServiceType = 'boosting' | 'coaching' | 'placement' | 'companion' | 'custom'
 
 export interface Service extends BaseEntity {
   gameId: string

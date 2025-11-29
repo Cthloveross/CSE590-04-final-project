@@ -23,7 +23,7 @@ const serviceSchema = new Schema<ServiceDocument>(
     title: { type: String, required: true },
     price: { type: Number, required: true, min: 1 },
     stockQuantity: { type: Number, required: true, default: 10, min: 0 },
-    type: { type: String, enum: ['boosting', 'coaching', 'placement', 'custom'], default: 'boosting' },
+    type: { type: String, enum: ['boosting', 'coaching', 'placement', 'companion', 'custom'], default: 'boosting' },
     description: { type: String, required: true },
     imageUrl: { type: String },
     isActive: { type: Boolean, default: true },

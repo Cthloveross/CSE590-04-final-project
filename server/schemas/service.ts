@@ -5,7 +5,7 @@ export const upsertServiceSchema = z.object({
   title: z.string().min(3).max(120),
   price: z.number().positive(),
   stockQuantity: z.number().int().nonnegative().optional().default(10),
-  type: z.enum(['boosting', 'coaching', 'placement', 'custom']),
+  type: z.enum(['boosting', 'coaching', 'placement', 'companion', 'custom']),
   description: z.string().min(10).max(1000),
   imageUrl: z.string().url().optional(),
   isActive: z.boolean().optional().default(true),
