@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAsyncData, useNuxtApp } from 'nuxt/app'
+import { useAsyncData } from 'nuxt/app'
 import type { Order, OrderStatus } from '~/types/entities'
 
 declare const definePageMeta: (meta: Record<string, any>) => void
 
 definePageMeta({ middleware: ['auth', 'admin'] })
 
-const nuxtApp = useNuxtApp()
-const fetcher = nuxtApp.$fetch as typeof $fetch
 const orders = ref<Order[]>([])
 const loading = ref(true)
 const message = ref('')
@@ -37,7 +35,7 @@ const { refresh } = await useAsyncData('admin-orders', async () => {
   loading.value = true
   message.value = ''
   try {
-    const response = await fetcher<Order[]>('/api/admin/orders')
+    const response = await $fetch<Order[]>('/api/admin/orders')
     orders.value = response
     return response
   } catch (err: any) {
@@ -52,7 +50,7 @@ const updateStatus = async (order: Order, status: OrderStatus) => {
   if (order.status === status) return
   order.status = status
   try {
-    await fetcher(`/api/admin/orders/${order._id}/status`, {
+    await $fetch(`/api/admin/orders/${order._id}/status`, {
       method: 'PATCH',
       body: { status },
     })
@@ -75,8 +73,17 @@ const onStatusChange = (order: Order, event: Event) => {
 <template>
   <section class="space-y-8">
     <header class="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-6">
-      <p class="text-sm uppercase tracking-widest text-brand-light">Admin</p>
-      <h1 class="text-3xl font-semibold text-white">Order operations center</h1>
+      <div class="flex items-center gap-3">
+        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500">
+          <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm uppercase tracking-widest text-brand-light">Admin Dashboard</p>
+          <h1 class="text-3xl font-semibold text-white">Order Management</h1>
+        </div>
+      </div>
       <p class="text-sm text-slate-400">
         Track every purchase, review buyer instructions, and advance orders as boosters progress.
       </p>

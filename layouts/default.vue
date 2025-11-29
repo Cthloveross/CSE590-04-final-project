@@ -12,8 +12,16 @@ const links = [
   { name: 'Shop', to: '/games/cs2' },
   { name: 'Orders', to: '/orders', auth: true },
   { name: 'Sell', to: '/admin/services', seller: true },
-  { name: 'Admin', to: '/admin/orders', admin: true },
 ]
+
+// Admin dropdown menu items
+const adminLinks = [
+  { name: 'Users', to: '/admin/users', icon: '👥' },
+  { name: 'Orders', to: '/admin/orders', icon: '📦' },
+  { name: 'Services', to: '/admin/services', icon: '🎮' },
+]
+
+const showAdminMenu = ref(false)
 
 const currentYear = new Date().getFullYear()
 const isHydrated = ref(false)
@@ -119,6 +127,55 @@ const getRoleBadge = (role: string) => {
               {{ link.name }}
             </NuxtLink>
           </template>
+          
+          <!-- Admin Dropdown -->
+          <div v-if="isHydrated && auth.isAdmin" class="relative">
+            <button
+              @click="showAdminMenu = !showAdminMenu"
+              class="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:bg-white/5"
+              :class="{
+                'bg-rose-500/10 text-rose-300': route.path.startsWith('/admin'),
+                'text-slate-400 hover:text-white': !route.path.startsWith('/admin')
+              }"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              Admin
+              <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <Transition
+              enter-active-class="transition ease-out duration-100"
+              enter-from-class="transform opacity-0 scale-95"
+              enter-to-class="transform opacity-100 scale-100"
+              leave-active-class="transition ease-in duration-75"
+              leave-from-class="transform opacity-100 scale-100"
+              leave-to-class="transform opacity-0 scale-95"
+            >
+              <div
+                v-if="showAdminMenu"
+                class="absolute right-0 mt-2 w-48 origin-top-right rounded-xl border border-white/10 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-xl"
+                @click.away="showAdminMenu = false"
+              >
+                <NuxtLink
+                  v-for="adminLink in adminLinks"
+                  :key="adminLink.to"
+                  :to="adminLink.to"
+                  class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-white/5"
+                  :class="{
+                    'bg-rose-500/10 text-rose-300': route.path === adminLink.to,
+                    'text-slate-300 hover:text-white': route.path !== adminLink.to
+                  }"
+                  @click="showAdminMenu = false"
+                >
+                  <span>{{ adminLink.icon }}</span>
+                  {{ adminLink.name }}
+                </NuxtLink>
+              </div>
+            </Transition>
+          </div>
           
           <!-- Wallet Balance -->
           <div v-if="isHydrated && auth.isAuthenticated" class="mr-2 flex items-center gap-2 rounded-lg bg-brand/10 px-3 py-1.5 border border-brand/20">

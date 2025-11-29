@@ -3,6 +3,12 @@ import { UserModel } from '~/server/models/User'
 import { connectToDatabase } from '~/server/utils/db'
 import { setAuthCookie } from '~/server/utils/auth'
 
+// Admin emails - these users will automatically get admin role
+const ADMIN_EMAILS = [
+  'tianchen.guan.2001@gmail.com',
+  'admin@example.com',
+]
+
 export default defineOAuthGoogleEventHandler({
   config: {
     scope: ['email', 'profile'],
@@ -10,11 +16,14 @@ export default defineOAuthGoogleEventHandler({
   async onSuccess(event, { user: googleUser }) {
     await connectToDatabase()
 
+    const email = googleUser.email.toLowerCase()
+    const isAdminEmail = ADMIN_EMAILS.includes(email)
+
     // Look for existing user by provider + providerId or by email
     let user = await UserModel.findOne({
       $or: [
         { provider: 'google', providerId: googleUser.sub },
-        { email: googleUser.email.toLowerCase() },
+        { email },
       ],
     })
 
@@ -22,18 +31,37 @@ export default defineOAuthGoogleEventHandler({
       // Create new user from Google profile
       user = await UserModel.create({
         username: googleUser.name || googleUser.email.split('@')[0],
-        email: googleUser.email.toLowerCase(),
+        email,
         provider: 'google',
         providerId: googleUser.sub,
         avatarUrl: googleUser.picture,
-        role: 'user',
+        role: isAdminEmail ? 'admin' : 'user',
       })
-    } else if (user.provider !== 'google') {
-      // Link existing local/github account to google
-      user.provider = 'google'
-      user.providerId = googleUser.sub
-      user.avatarUrl = googleUser.picture || user.avatarUrl
-      await user.save()
+    } else {
+      // Update existing user
+      let needsSave = false
+      
+      if (user.provider !== 'google') {
+        // Link existing local/github account to google
+        user.provider = 'google'
+        user.providerId = googleUser.sub
+        needsSave = true
+      }
+      
+      if (!user.avatarUrl && googleUser.picture) {
+        user.avatarUrl = googleUser.picture
+        needsSave = true
+      }
+      
+      // Always ensure admin emails have admin role
+      if (isAdminEmail && user.role !== 'admin') {
+        user.role = 'admin'
+        needsSave = true
+      }
+      
+      if (needsSave) {
+        await user.save()
+      }
     }
 
     // Set JWT cookie for session
