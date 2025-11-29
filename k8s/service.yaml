@@ -1,0 +1,42 @@
+# Kubernetes Services
+---
+# Service for the Nuxt.js Application
+apiVersion: v1
+kind: Service
+metadata:
+  name: gaming-platform-app
+  namespace: gaming-platform
+  labels:
+    app: gaming-platform
+    component: app
+spec:
+  type: ClusterIP
+  selector:
+    app: gaming-platform
+    component: app
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+
+---
+# Service for the Socket.IO Server
+apiVersion: v1
+kind: Service
+metadata:
+  name: gaming-platform-socket
+  namespace: gaming-platform
+  labels:
+    app: gaming-platform
+    component: socket
+spec:
+  type: ClusterIP
+  selector:
+    app: gaming-platform
+    component: socket
+  ports:
+    - name: socket
+      port: 3001
+      targetPort: 3001
+      protocol: TCP

@@ -5,6 +5,7 @@ import { adminOrderStatusSchema } from '~/server/schemas/order'
 import { connectToDatabase } from '~/server/utils/db'
 import { OrderModel } from '~/server/models/Order'
 import { toOrder } from '~/server/utils/serializers'
+import { emitOrderStatusUpdate } from '~/server/utils/socket'
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
@@ -19,6 +20,9 @@ export default defineEventHandler(async (event) => {
   if (!updated) {
     throw createError({ statusCode: 404, statusMessage: 'Order not found' })
   }
+
+  // Emit Socket.IO event for real-time order status update
+  emitOrderStatusUpdate(id, payload.status, updated.userId.toString())
 
   return toOrder(updated)
 })

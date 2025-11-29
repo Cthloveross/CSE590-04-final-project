@@ -1,0 +1,15 @@
+# Kubernetes ConfigMap - Non-sensitive configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gaming-platform-config
+  namespace: gaming-platform
+  labels:
+    app: gaming-platform
+data:
+  NODE_ENV: "production"
+  JWT_EXPIRES_IN: "7d"
+  NUXT_JWT_EXPIRES_IN: "7d"
+  NUXT_PUBLIC_SITE_URL: "http://localhost:30000"
+  NUXT_PUBLIC_SOCKET_URL: "http://localhost:30001"
+  SOCKET_PORT: "3001"

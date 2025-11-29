@@ -1,0 +1,23 @@
+# Kustomization file - Deploy all resources with: kubectl apply -k k8s/
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: gaming-platform
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secrets.yaml
+  - deployment-app.yaml
+  - deployment-socket.yaml
+  - service.yaml
+  - ingress.yaml
+  - hpa.yaml
+
+commonLabels:
+  app: gaming-platform
+  managed-by: kustomize
+
+images:
+  - name: gaming-platform
+    newTag: latest

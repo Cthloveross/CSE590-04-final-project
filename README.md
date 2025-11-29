@@ -19,6 +19,14 @@ A **CS2 game services marketplace** with **CI/CD pipeline** where authenticated 
 - **Order Management** – Place orders with game credentials, track order status
 - **Seller Dashboard** – Create/edit/delete service listings (sellers & admins only)
 
+### Real-Time Features (Socket.IO)
+- **Live Order Status Updates** – Instant notifications when order status changes
+- **New Service Alerts** – Real-time notifications for new services
+- **Online Users Counter** – See how many users are currently online
+- **Stock Updates** – Real-time inventory changes across all clients
+- **System Notifications** – In-app notification system with history
+- **Connection Status** – Visual indicator showing WebSocket connection state
+
 ### CI/CD Pipeline
 - **GitHub Actions Workflow** – Automated build, test, and deployment
 - **Docker Containerization** – Multi-stage Dockerfile for optimized production builds
@@ -31,6 +39,7 @@ A **CS2 game services marketplace** with **CI/CD pipeline** where authenticated 
 - **Modern dark theme** with gaming aesthetic
 - **User profile dropdown** with avatar, role badge, and OAuth provider indication
 - **Real-time cart badge** showing item count
+- **Socket.IO status indicator** with live notifications panel
 
 ## 🧱 Architecture
 
@@ -41,6 +50,7 @@ A **CS2 game services marketplace** with **CI/CD pipeline** where authenticated 
 | APIs | Nitro server routes under `server/api/*`, Zod validation, JWT middleware |
 | Auth | nuxt-auth-utils for OAuth, custom JWT for sessions |
 | Data | MongoDB Atlas (cloud database), Mongoose models |
+| Real-Time | Socket.IO for bidirectional event-based communication |
 | Tooling | Node 22+, npm, Vitest |
 
 ## 🛠 Prerequisites
@@ -392,6 +402,7 @@ mongoose.connect(process.env.MONGODB_URI)
 - ✅ **CI/CD Pipeline** (GitHub Actions with Docker build, automated testing, and deployment)
 - ✅ **Containerization** (Docker + Docker Compose for local and production deployment)
 - ✅ **Automated Testing** (Unit tests with Vitest, E2E tests with Playwright)
+- ✅ **Socket.IO Integration** (Real-time bidirectional communication, live updates, notifications)
 
 ## 📊 Project Statistics
 
@@ -415,6 +426,7 @@ mongoose.connect(process.env.MONGODB_URI)
 
 ## 📚 Additional Documentation
 
+- **[SOCKET_IO.md](SOCKET_IO.md)** – Complete Socket.IO implementation guide and API reference
 - **[CI_CD_SETUP.md](CI_CD_SETUP.md)** – Complete CI/CD setup and configuration guide
 - **[DEMO_GUIDE.md](DEMO_GUIDE.md)** – Step-by-step instructions for CI/CD demos
 - **[docs/architecture.md](docs/architecture.md)** – System architecture documentation

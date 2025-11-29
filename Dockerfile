@@ -14,6 +14,12 @@ RUN npm ci
 # Copy application files
 COPY . .
 
+# Set build-time environment variables for Nuxt public config
+ARG NUXT_PUBLIC_SOCKET_URL=http://localhost:30001
+ARG NUXT_PUBLIC_SITE_URL=http://localhost:30000
+ENV NUXT_PUBLIC_SOCKET_URL=$NUXT_PUBLIC_SOCKET_URL
+ENV NUXT_PUBLIC_SITE_URL=$NUXT_PUBLIC_SITE_URL
+
 # Build the application
 RUN npm run build
 
@@ -34,14 +40,18 @@ RUN npm ci
 # Copy built application from builder
 COPY --from=builder /app/.output /app/.output
 
+# Copy Socket.IO server
+COPY socket-server.mjs ./socket-server.mjs
+
 # Remove dev dependencies after build
 RUN npm prune --production
 
-# Expose the application port
-EXPOSE 3000
+# Expose the application ports
+EXPOSE 3000 3001
 
 # Set environment to production
 ENV NODE_ENV=production
 
-# Start the application
+# Default: Start the Nuxt application
+# Override with: docker run ... node socket-server.mjs (for socket server)
 CMD ["node", ".output/server/index.mjs"]

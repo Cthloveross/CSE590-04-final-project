@@ -1,0 +1,58 @@
+# Kubernetes Deployment for the Socket.IO Server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gaming-platform-socket
+  namespace: gaming-platform
+  labels:
+    app: gaming-platform
+    component: socket
+spec:
+  replicas: 1  # Socket.IO needs sticky sessions, keep at 1 or use Redis adapter
+  selector:
+    matchLabels:
+      app: gaming-platform
+      component: socket
+  template:
+    metadata:
+      labels:
+        app: gaming-platform
+        component: socket
+    spec:
+      containers:
+        - name: socket-server
+          image: gaming-platform:latest
+          imagePullPolicy: IfNotPresent
+          command: ["node", "socket-server.mjs"]
+          ports:
+            - containerPort: 3001
+              name: socket
+          env:
+            - name: SOCKET_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: gaming-platform-config
+                  key: SOCKET_PORT
+            - name: NUXT_PUBLIC_SITE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: gaming-platform-config
+                  key: NUXT_PUBLIC_SITE_URL
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          livenessProbe:
+            tcpSocket:
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      restartPolicy: Always

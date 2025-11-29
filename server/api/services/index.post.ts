@@ -5,6 +5,7 @@ import { upsertServiceSchema } from '~/server/schemas/service'
 import { connectToDatabase } from '~/server/utils/db'
 import { ServiceModel } from '~/server/models/Service'
 import { toService } from '~/server/utils/serializers'
+import { emitNewService } from '~/server/utils/socket'
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
@@ -21,5 +22,10 @@ export default defineEventHandler(async (event) => {
     isActive: payload.isActive ?? true,
   }
   const created = await ServiceModel.create(servicePayload)
-  return toService(created)
+  const service = toService(created)
+  
+  // Emit Socket.IO event for new service
+  emitNewService(service)
+  
+  return service
 })

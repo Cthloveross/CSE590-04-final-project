@@ -1,0 +1,8 @@
+# Kubernetes Namespace for the Gaming Services Platform
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gaming-platform
+  labels:
+    app: gaming-platform
+    environment: production

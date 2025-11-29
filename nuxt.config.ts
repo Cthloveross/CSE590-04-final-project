@@ -3,7 +3,11 @@ import { defineNuxtConfig } from 'nuxt/config'
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', 'nuxt-auth-utils'],
+  modules: [
+    '@nuxtjs/tailwindcss',
+    '@pinia/nuxt',
+    'nuxt-auth-utils',
+  ],
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     mongodbUri: process.env.MONGODB_URI || '',
@@ -26,6 +30,7 @@ export default defineNuxtConfig({
     },
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
+      socketUrl: process.env.NUXT_PUBLIC_SOCKET_URL ?? 'http://localhost:3001',
     },
   },
 })

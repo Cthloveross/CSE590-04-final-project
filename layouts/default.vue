@@ -314,10 +314,13 @@ const getRoleBadge = (role: string) => {
             <span class="text-sm text-slate-400">GameBoost · CS2 Services</span>
           </div>
           <p class="text-xs text-slate-500">
-            Built with Nuxt 3, MongoDB, Tailwind CSS · {{ currentYear }}
+            Built with Nuxt 3, MongoDB, Tailwind CSS, Socket.IO · {{ currentYear }}
           </p>
         </div>
       </div>
     </footer>
+
+    <!-- Socket.IO Status Indicator -->
+    <SocketStatus />
   </div>
 </template>

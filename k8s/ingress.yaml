@@ -1,0 +1,79 @@
+# Kubernetes Ingress - Route external traffic to services
+# Requires an Ingress Controller (e.g., nginx-ingress, traefik)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gaming-platform-ingress
+  namespace: gaming-platform
+  labels:
+    app: gaming-platform
+  annotations:
+    # For nginx-ingress controller
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # WebSocket support for Socket.IO
+    nginx.ingress.kubernetes.io/websocket-services: "gaming-platform-socket"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$request_uri"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: gaming-platform.local  # Change to your domain
+      http:
+        paths:
+          # Main application
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gaming-platform-app
+                port:
+                  number: 3000
+          # Socket.IO server
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: gaming-platform-socket
+                port:
+                  number: 3001
+
+---
+# Alternative: NodePort Service for local development without Ingress
+apiVersion: v1
+kind: Service
+metadata:
+  name: gaming-platform-nodeport
+  namespace: gaming-platform
+  labels:
+    app: gaming-platform
+spec:
+  type: NodePort
+  selector:
+    app: gaming-platform
+    component: app
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      nodePort: 30000  # Access via http://localhost:30000
+
+---
+# NodePort for Socket.IO (for local development)
+apiVersion: v1
+kind: Service
+metadata:
+  name: gaming-platform-socket-nodeport
+  namespace: gaming-platform
+  labels:
+    app: gaming-platform
+spec:
+  type: NodePort
+  selector:
+    app: gaming-platform
+    component: socket
+  ports:
+    - name: socket
+      port: 3001
+      targetPort: 3001
+      nodePort: 30001  # Access via http://localhost:30001

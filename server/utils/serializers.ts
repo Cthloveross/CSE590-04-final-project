@@ -62,8 +62,8 @@ export const toCartItem = (
 
 export const toOrder = (doc: OrderDocument & { userId?: UserDocument }): Order => ({
   _id: doc._id.toString(),
-  userId: doc.userId.toString(),
-  user: doc.userId && 'email' in doc.userId ? toUserProfile(doc.userId as UserDocument) : undefined,
+  userId: doc.userId ? (typeof doc.userId === 'object' && '_id' in doc.userId ? (doc.userId as any)._id.toString() : doc.userId.toString()) : '',
+  user: doc.userId && typeof doc.userId === 'object' && 'email' in doc.userId ? toUserProfile(doc.userId as UserDocument) : undefined,
   items: doc.items.map((item) => ({
     serviceId: item.serviceId.toString(),
     title: item.title,
