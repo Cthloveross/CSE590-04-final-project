@@ -73,25 +73,25 @@ const sampleGames = [
   {
     slug: 'cs2',
     name: 'Counter-Strike 2',
-    iconUrl: 'https://via.placeholder.com/150/FF5722/ffffff?text=CS2',
+    iconUrl: '/images/cs2.png',
     description: 'Tactical FPS with competitive ranked mode.',
   },
   {
     slug: 'valorant',
     name: 'Valorant',
-    iconUrl: 'https://via.placeholder.com/150/FF4655/ffffff?text=VAL',
+    iconUrl: '/images/valorant.jpg',
     description: 'Character-based tactical shooter from Riot Games.',
   },
   {
     slug: 'lol',
     name: 'League of Legends',
-    iconUrl: 'https://via.placeholder.com/150/0AC8B9/ffffff?text=LoL',
+    iconUrl: '/images/lol.jpg',
     description: 'MOBA with ranked ladder and seasonal rewards.',
   },
   {
     slug: 'apex',
     name: 'Apex Legends',
-    iconUrl: 'https://via.placeholder.com/150/CD3333/ffffff?text=APEX',
+    iconUrl: '/images/apex.png',
     description: 'Battle royale with hero abilities and fast-paced action.',
   },
 ]
