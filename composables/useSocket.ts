@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client'
 import type { Ref } from 'vue'
+import { useCatalogStore } from '~/stores/catalog'
 
 // Module-level shared state - singleton pattern
 let socket: Socket | null = null
@@ -128,6 +129,18 @@ export const useSocket = () => {
         message: `${data.service?.title || 'A new service'} is now available!`,
         timestamp: new Date(data.timestamp),
       })
+    })
+
+    // Listen to stock updates (real-time inventory)
+    socket.on('service:stock_updated', (data: { serviceId: string; stockQuantity: number; timestamp: number }) => {
+      console.log('📊 Stock updated:', data.serviceId, '->', data.stockQuantity)
+      // Import catalog store dynamically to avoid circular dependency
+      try {
+        const catalogStore = useCatalogStore()
+        catalogStore.updateServiceStock(data.serviceId, data.stockQuantity)
+      } catch (e) {
+        console.warn('Could not update catalog store:', e)
+      }
     })
 
     // Chat listeners

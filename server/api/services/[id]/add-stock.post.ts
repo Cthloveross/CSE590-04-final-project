@@ -5,6 +5,7 @@ import { parseBody } from '~/server/utils/validation'
 import { connectToDatabase } from '~/server/utils/db'
 import { ServiceModel } from '~/server/models/Service'
 import { toService } from '~/server/utils/serializers'
+import { emitStockUpdate } from '~/server/utils/socket'
 
 const addStockSchema = z.object({
   quantity: z.number().int().positive().max(100),
@@ -36,6 +37,9 @@ export default defineEventHandler(async (event) => {
   // Add stock quantity
   service.stockQuantity += payload.quantity
   await service.save()
+
+  // Emit real-time stock update
+  emitStockUpdate(serviceId, service.stockQuantity)
 
   // In a real app, you'd also store the provider's availability details
   // For demo purposes, we just increment the stock

@@ -34,11 +34,26 @@ export const useCatalogStore = defineStore('catalog', () => {
     }
   }
 
+  // Update service stock in real-time (called from socket listener)
+  const updateServiceStock = (serviceId: string, newStock: number) => {
+    // Update in all game service lists
+    for (const slug in servicesByGame) {
+      const services = servicesByGame[slug]
+      const service = services.find(s => s._id === serviceId)
+      if (service) {
+        console.log(`📊 Real-time stock update: ${service.title} -> ${newStock}`)
+        service.stockQuantity = newStock
+        break
+      }
+    }
+  }
+
   return {
     games,
     servicesByGame,
     loading,
     fetchGames,
     fetchServices,
+    updateServiceStock,
   }
 })

@@ -8,6 +8,7 @@ import { OrderModel } from '~/server/models/Order'
 import { ServiceModel } from '~/server/models/Service'
 import { UserModel } from '~/server/models/User'
 import { toOrder } from '~/server/utils/serializers'
+import { emitStockUpdate } from '~/server/utils/socket'
 
 export default defineEventHandler(async (event) => {
   const user = await requireUser(event)
@@ -54,6 +55,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Atomically decrement stock for each service and check availability
+  const updatedServices: { serviceId: string; stockQuantity: number }[] = []
   for (const item of orderItems) {
     const result = await ServiceModel.findOneAndUpdate(
       { _id: item.serviceId, stockQuantity: { $gte: item.quantity } },
@@ -63,6 +65,12 @@ export default defineEventHandler(async (event) => {
     if (!result) {
       throw createError({ statusCode: 400, statusMessage: `Not enough stock for "${item.title}". Please refresh and try again.` })
     }
+    updatedServices.push({ serviceId: result._id.toString(), stockQuantity: result.stockQuantity })
+  }
+
+  // Emit real-time stock updates for all affected services
+  for (const { serviceId, stockQuantity } of updatedServices) {
+    emitStockUpdate(serviceId, stockQuantity)
   }
 
   // Deduct wallet balance
