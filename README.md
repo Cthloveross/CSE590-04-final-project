@@ -43,15 +43,15 @@ A **CS2 game services marketplace** with **CI/CD pipeline** where authenticated 
 
 ## 🧱 Architecture
 
-| Layer | Notes |
-| --- | --- |
-| UI | Nuxt 3 pages + layouts, TailwindCSS, modern gaming aesthetic |
-| State | Pinia (`auth`, `catalog`, `cart`) with persisted auth/cart and SSR-safe fetch |
-| APIs | Nitro server routes under `server/api/*`, Zod validation, JWT middleware |
-| Auth | nuxt-auth-utils for OAuth, custom JWT for sessions |
-| Data | MongoDB Atlas (cloud database), Mongoose models |
-| Real-Time | Socket.IO for bidirectional event-based communication |
-| Tooling | Node 22+, npm, Vitest |
+| Layer     | Notes                                                                         |
+| --------- | ----------------------------------------------------------------------------- |
+| UI        | Nuxt 3 pages + layouts, TailwindCSS, modern gaming aesthetic                  |
+| State     | Pinia (`auth`, `catalog`, `cart`) with persisted auth/cart and SSR-safe fetch |
+| APIs      | Nitro server routes under `server/api/*`, Zod validation, JWT middleware      |
+| Auth      | nuxt-auth-utils for OAuth, custom JWT for sessions                            |
+| Data      | MongoDB Atlas (cloud database), Mongoose models                               |
+| Real-Time | Socket.IO for bidirectional event-based communication                         |
+| Tooling   | Node 22+, npm, Vitest                                                         |
 
 ## 🛠 Prerequisites
 
@@ -94,10 +94,10 @@ Visit **http://localhost:3000**
 
 ### Demo Accounts
 
-| Role | Email | Password |
-| --- | --- | --- |
+| Role  | Email               | Password     |
+| ----- | ------------------- | ------------ |
 | Admin | `admin@example.com` | `admin12345` |
-| User | `user@example.com` | `user12345` |
+| User  | `user@example.com`  | `user12345`  |
 
 ## 🔐 OAuth Setup
 
@@ -199,12 +199,12 @@ This project is configured to use **MongoDB Atlas** (cloud database) exclusively
 
 ### ❌ Common Issues
 
-| Error | Solution |
-|-------|----------|
+| Error                              | Solution                                      |
+| ---------------------------------- | --------------------------------------------- |
 | "Could not connect to any servers" | Add your IP to Atlas Network Access whitelist |
-| "Authentication failed" | Check username/password in connection string |
-| "Database name not specified" | Ensure `/game-services` is in the URI |
-| Connection timeout | Wait 1-2 minutes after adding IP to whitelist |
+| "Authentication failed"            | Check username/password in connection string  |
+| "Database name not specified"      | Ensure `/game-services` is in the URI         |
+| Connection timeout                 | Wait 1-2 minutes after adding IP to whitelist |
 
 ## 📋 REST API Endpoints
 
@@ -241,26 +241,97 @@ This project is configured to use **MongoDB Atlas** (cloud database) exclusively
 
 ## 🧪 Development Commands
 
-| Task | Command |
-| --- | --- |
-| Start dev server | `npm run dev` |
-| Build production | `npm run build` |
-| Preview production | `npm run preview` |
-| Run unit tests | `npm run test` |
-| Run E2E tests | `npm run test:e2e` |
-| Run E2E tests (UI mode) | `npm run test:e2e:ui` |
-| Regenerate types | `npx nuxi prepare` |
-| Seed database | `node scripts/seed.mjs` |
+| Task                    | Command                 |
+| ----------------------- | ----------------------- |
+| Start dev server        | `npm run dev`           |
+| Build production        | `npm run build`         |
+| Preview production      | `npm run preview`       |
+| Run unit tests          | `npm run test`          |
+| Run E2E tests           | `npm run test:e2e`      |
+| Run E2E tests (UI mode) | `npm run test:e2e:ui`   |
+| Regenerate types        | `npx nuxi prepare`      |
+| Seed database           | `node scripts/seed.mjs` |
+
+## 🧪 E2E Testing
+
+This project includes a comprehensive E2E test suite using **Playwright**, covering all major user flows across multiple browsers.
+
+### Test Structure
+
+| Test File            | Description                                                  |
+| -------------------- | ------------------------------------------------------------ |
+| `home.spec.ts`       | Home page display, hero section, feature highlights          |
+| `auth.spec.ts`       | Login page, OAuth buttons, form validation, protected routes |
+| `catalog.spec.ts`    | Game listings, CS2 page, service details                     |
+| `cart.spec.ts`       | Cart authentication requirement                              |
+| `checkout.spec.ts`   | Checkout authentication requirement                          |
+| `orders.spec.ts`     | Orders authentication requirement                            |
+| `navigation.spec.ts` | Header navigation, login link visibility                     |
+| `api.spec.ts`        | REST API endpoint testing (games, services, auth)            |
+| `socket.spec.ts`     | Socket.IO server health check (local + K8s ports)            |
+| `happy-path.spec.ts` | Complete user journey: login → browse → cart → checkout      |
+
+### Running Tests
+
+```bash
+# Run all E2E tests
+npm run test:e2e
+
+# Run tests with UI mode (interactive)
+npm run test:e2e:ui
+
+# Run specific test file
+npx playwright test tests/e2e/happy-path.spec.ts
+
+# Run tests with verbose output
+npx playwright test --reporter=list
+```
+
+### Browser Coverage
+
+Tests run across **5 browser configurations**:
+- Chromium (Desktop)
+- Firefox (Desktop)
+- WebKit/Safari (Desktop)
+- Mobile Chrome (Android)
+- Mobile Safari (iOS)
+
+### Happy Path Test
+
+The `happy-path.spec.ts` tests the complete user journey:
+
+1. **Start unauthenticated** → Visit home page
+2. **Login** → Authenticate with demo credentials
+3. **Browse catalog** → Navigate to CS2 services
+4. **View service** → Click on service details
+5. **Add to cart** → Add service to shopping cart
+6. **Go to cart** → Review cart contents
+7. **Checkout** → Proceed to checkout page
+
+### Socket.IO Testing
+
+Socket tests automatically detect the server on:
+- Local development: `localhost:3001`
+- Kubernetes NodePort: `localhost:30001`
+
+### Test Results
+
+```
+145 passed (17s)
+- 10 test files
+- 29 unique tests
+- 5 browser configurations
+```
 
 ## 🐳 Docker Commands
 
-| Task | Command |
-| --- | --- |
-| Build Docker image | `docker build -t gaming-platform:latest .` |
-| Run with Docker Compose | `docker-compose up -d` |
-| Stop Docker Compose | `docker-compose down` |
-| Rebuild and restart | `docker-compose up --build -d` |
-| View logs | `docker-compose logs -f app` |
+| Task                    | Command                                    |
+| ----------------------- | ------------------------------------------ |
+| Build Docker image      | `docker build -t gaming-platform:latest .` |
+| Run with Docker Compose | `docker-compose up -d`                     |
+| Stop Docker Compose     | `docker-compose down`                      |
+| Rebuild and restart     | `docker-compose up --build -d`             |
+| View logs               | `docker-compose logs -f app`               |
 
 **Note**: Docker Compose uses MongoDB Atlas from your `.env` file. Ensure:
 - `.env` file exists with valid `MONGODB_URI`
@@ -294,9 +365,9 @@ kubectl get all -n gaming-platform
 
 ### Access the Application
 
-| Service | URL |
-| --- | --- |
-| Application | http://localhost:30000 |
+| Service          | URL                    |
+| ---------------- | ---------------------- |
+| Application      | http://localhost:30000 |
 | Socket.IO Server | http://localhost:30001 |
 
 ### Useful Kubernetes Commands
@@ -390,30 +461,30 @@ For detailed CI/CD setup and demo instructions, see:
 
 ## 🎮 User Roles & Permissions
 
-| Feature | User (Buyer) | Seller | Admin |
-| --- | :---: | :---: | :---: |
-| Browse catalog | ✅ | ✅ | ✅ |
-| View auctions | ✅ | ✅ | ✅ |
-| Place bids | ✅ | ✅ | ✅ |
-| Add to cart | ✅ | ✅ | ✅ |
-| Place orders | ✅ | ✅ | ✅ |
-| View own orders | ✅ | ✅ | ✅ |
-| Create listings | ❌ | ✅ | ✅ |
-| Manage listings | ❌ | ✅ | ✅ |
-| View all orders | ❌ | ❌ | ✅ |
-| Manage order status | ❌ | ❌ | ✅ |
+| Feature             | User (Buyer) | Seller | Admin |
+| ------------------- | :----------: | :----: | :---: |
+| Browse catalog      |      ✅       |   ✅    |   ✅   |
+| View auctions       |      ✅       |   ✅    |   ✅   |
+| Place bids          |      ✅       |   ✅    |   ✅   |
+| Add to cart         |      ✅       |   ✅    |   ✅   |
+| Place orders        |      ✅       |   ✅    |   ✅   |
+| View own orders     |      ✅       |   ✅    |   ✅   |
+| Create listings     |      ❌       |   ✅    |   ✅   |
+| Manage listings     |      ❌       |   ✅    |   ✅   |
+| View all orders     |      ❌       |   ❌    |   ✅   |
+| Manage order status |      ❌       |   ❌    |   ✅   |
 
 ## 🧹 Troubleshooting
 
-| Symptom | Fix |
-| --- | --- |
-| **MongoDB connection fails** | 1. Check Atlas IP whitelist<br>2. Verify credentials in `.env`<br>3. Wait 1-2 minutes after adding IP<br>4. Ensure database name is `game-services` |
-| **OAuth redirect error** | Ensure redirect URIs match exactly in OAuth provider settings |
-| **`fetcher is not a function`** | Clear caches: `rm -rf .nuxt .output node_modules/.vite && npm install && npm run dev` |
-| **Hydration mismatch** | Clear browser cache, restart dev server |
-| **Docker build fails** | Ensure `.env` file exists and `MONGODB_URI` is set |
-| **E2E tests fail** | Run `npx playwright install` to install browser dependencies |
-| **Session password error** | Ensure `NUXT_SESSION_PASSWORD` is at least 32 characters |
+| Symptom                         | Fix                                                                                                                                                 |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MongoDB connection fails**    | 1. Check Atlas IP whitelist<br>2. Verify credentials in `.env`<br>3. Wait 1-2 minutes after adding IP<br>4. Ensure database name is `game-services` |
+| **OAuth redirect error**        | Ensure redirect URIs match exactly in OAuth provider settings                                                                                       |
+| **`fetcher is not a function`** | Clear caches: `rm -rf .nuxt .output node_modules/.vite && npm install && npm run dev`                                                               |
+| **Hydration mismatch**          | Clear browser cache, restart dev server                                                                                                             |
+| **Docker build fails**          | Ensure `.env` file exists and `MONGODB_URI` is set                                                                                                  |
+| **E2E tests fail**              | Run `npx playwright install` to install browser dependencies                                                                                        |
+| **Session password error**      | Ensure `NUXT_SESSION_PASSWORD` is at least 32 characters                                                                                            |
 
 ### MongoDB Atlas Specific Issues
 

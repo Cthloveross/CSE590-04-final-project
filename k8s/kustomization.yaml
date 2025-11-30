@@ -7,16 +7,18 @@ namespace: gaming-platform
 resources:
   - namespace.yaml
   - configmap.yaml
-  # - secrets.yaml  # Create secret manually from .env file instead
+  - secrets.yaml
+  - deployment-redis.yaml
   - deployment-app.yaml
   - deployment-socket.yaml
   - service.yaml
   - ingress.yaml
   - hpa.yaml
 
-commonLabels:
-  app: gaming-platform
-  managed-by: kustomize
+labels:
+  - pairs:
+      app: gaming-platform
+      managed-by: kustomize
 
 images:
   - name: gaming-platform
