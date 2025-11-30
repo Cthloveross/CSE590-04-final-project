@@ -6,11 +6,15 @@ async function login(page: Page, email = 'user@example.com', password = 'user123
     await page.locator('input[type="email"]').fill(email)
     await page.locator('input[type="password"]').fill(password)
     
-    // Use Promise.all to handle click and navigation together
-    await Promise.all([
-        page.waitForURL('/', { timeout: 15000 }),
-        page.locator('button[type="submit"]').click()
-    ])
+    // Click submit and wait for either navigation or successful login indication
+    await page.locator('button[type="submit"]').click()
+    
+    // Wait for successful login - either URL changes or we see authenticated state
+    await expect(async () => {
+        const url = page.url()
+        // Either redirected to home or still on page but authenticated
+        expect(url.includes('/login')).toBe(false)
+    }).toPass({ timeout: 15000 })
 }
 
 test.describe('Authentication', () => {

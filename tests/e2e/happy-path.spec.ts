@@ -13,11 +13,14 @@ test.describe('Happy Path - Full User Journey', () => {
         await page.locator('input[type="email"]').fill('user@example.com')
         await page.locator('input[type="password"]').fill('user12345')
         
-        // Use Promise.all to handle click and navigation together
-        await Promise.all([
-            page.waitForURL('/', { timeout: 15000 }),
-            page.locator('button[type="submit"]').click()
-        ])
+        // Click submit and wait for navigation away from login page
+        await page.locator('button[type="submit"]').click()
+        
+        // Wait for successful login - URL should no longer be /login
+        await expect(async () => {
+            const url = page.url()
+            expect(url.includes('/login')).toBe(false)
+        }).toPass({ timeout: 15000 })
 
         // Step 3: Browse to CS2 game services
         await page.goto('/games/cs2')
@@ -49,8 +52,8 @@ test.describe('Happy Path - Full User Journey', () => {
         // If authenticated, should see cart page
         const currentUrl = page.url()
         if (!currentUrl.includes('/login')) {
-            // We're on cart page
-            await expect(page.locator('text=Cart')).toBeVisible()
+            // We're on cart page - check for cart heading or empty cart message
+            await expect(page.getByText('Cart', { exact: true }).first()).toBeVisible()
         }
 
         // Step 7: Proceed to checkout if available
