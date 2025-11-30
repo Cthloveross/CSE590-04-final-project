@@ -36,9 +36,33 @@ export const useSocket = () => {
     isConnected.value = true
   }
 
+  // Function to authenticate user on socket
+  const authenticateUser = () => {
+    if (socket?.connected && authStore.user) {
+      console.log('🔐 Authenticating user on socket:', authStore.user.email)
+      socket.emit('authenticate', {
+        userId: authStore.user._id,
+        email: authStore.user.email,
+        role: authStore.user.role,
+      })
+    }
+  }
+
+  // Watch for auth state changes and re-authenticate (only on client)
+  if (import.meta.client) {
+    watch(() => authStore.user, (newUser) => {
+      if (newUser && socket?.connected) {
+        console.log('👤 Auth state changed, re-authenticating socket')
+        authenticateUser()
+      }
+    }, { immediate: true })
+  }
+
   const connect = () => {
     if (socket?.connected) {
       isConnected.value = true
+      // Re-authenticate if user is already logged in
+      authenticateUser()
       return socket
     }
 
@@ -58,13 +82,7 @@ export const useSocket = () => {
       isConnected.value = true
 
       // Authenticate user if logged in
-      if (authStore.user) {
-        socket?.emit('authenticate', {
-          userId: authStore.user._id,
-          email: authStore.user.email,
-          role: authStore.user.role,
-        })
-      }
+      authenticateUser()
     })
 
     socket.on('disconnect', () => {
@@ -188,14 +206,25 @@ export const useSocket = () => {
   }
 
   const on = (event: string, callback: (data: any) => void) => {
+    console.log(`📡 Registering listener for event: ${event}, socket exists: ${!!socket}, connected: ${socket?.connected}`)
     if (socket) {
       socket.on(event, callback)
+      console.log(`✅ Listener registered for: ${event}`)
+    } else {
+      console.warn(`⚠️ Socket not initialized yet, cannot register listener for: ${event}`)
+      // Try to connect and then register
+      const s = connect()
+      if (s) {
+        s.on(event, callback)
+        console.log(`✅ Listener registered after connect for: ${event}`)
+      }
     }
   }
 
   const off = (event: string, callback?: (data: any) => void) => {
     if (socket) {
       socket.off(event, callback)
+      console.log(`🔌 Listener removed for: ${event}`)
     }
   }
 

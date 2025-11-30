@@ -62,6 +62,8 @@ A **CS2 game services marketplace** with **CI/CD pipeline** where authenticated 
 
 ## 🚀 Quick Start
 
+### macOS / Linux
+
 ```bash
 # 1. Clone the repository
 git clone https://github.com/Cthloveross/CSE590-04-final-project.git
@@ -73,6 +75,27 @@ npm install
 # 3. Configure environment variables
 cp .env.example .env
 # Edit .env - see "Environment Setup" section below for details
+
+# 4. Seed the database
+node scripts/seed.mjs
+
+# 5. Start development server
+npm run dev
+```
+
+### Windows (PowerShell)
+
+```powershell
+# 1. Clone the repository
+git clone https://github.com/Cthloveross/CSE590-04-final-project.git
+cd CSE590-04-final-project
+
+# 2. Install dependencies
+npm install
+
+# 3. Configure environment variables
+copy .env.example .env
+# Edit .env with notepad or VS Code - see "Environment Setup" section below
 
 # 4. Seed the database
 node scripts/seed.mjs
@@ -310,7 +333,7 @@ docker-compose down
 
 This project supports deployment to Kubernetes. See [k8s/README.md](k8s/README.md) for detailed instructions.
 
-**Quick Start (Docker Desktop):**
+**Quick Start - macOS/Linux (Docker Desktop):**
 
 ```bash
 # 1. Enable Kubernetes in Docker Desktop
@@ -326,6 +349,28 @@ kubectl create namespace gaming-platform
 kubectl create secret generic gaming-platform-secrets \
   --from-env-file=.env \
   -n gaming-platform \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# 4. Deploy
+kubectl apply -k k8s/
+```
+
+**Quick Start - Windows (PowerShell):**
+
+```powershell
+# 1. Enable Kubernetes in Docker Desktop
+
+# 2. Build Docker image
+docker build `
+  --build-arg NUXT_PUBLIC_SOCKET_URL=http://localhost:30001 `
+  --build-arg NUXT_PUBLIC_SITE_URL=http://localhost:30000 `
+  -t gaming-platform:latest .
+
+# 3. Create namespace and secrets from .env
+kubectl create namespace gaming-platform
+kubectl create secret generic gaming-platform-secrets `
+  --from-env-file=.env `
+  -n gaming-platform `
   --dry-run=client -o yaml | kubectl apply -f -
 
 # 4. Deploy
@@ -426,13 +471,13 @@ For detailed CI/CD setup and demo instructions, see:
 
 ## 🧹 Troubleshooting
 
-| Symptom                         | Fix                                                                                 |
-| ------------------------------- | ----------------------------------------------------------------------------------- |
-| **MongoDB connection fails**    | Check Atlas IP whitelist, verify `.env` credentials, wait 1-2 min after adding IP   |
-| **OAuth redirect error**        | Ensure redirect URIs match exactly (port 3000 for dev, 30000 for K8s)               |
-| **`fetcher is not a function`** | Clear caches: `rm -rf .nuxt .output node_modules/.vite && npm install`              |
-| **E2E tests fail**              | Run `npx playwright install` to install browser dependencies                        |
-| **Session password error**      | Ensure `NUXT_SESSION_PASSWORD` is at least 32 characters                            |
+| Symptom                         | Fix                                                                               |
+| ------------------------------- | --------------------------------------------------------------------------------- |
+| **MongoDB connection fails**    | Check Atlas IP whitelist, verify `.env` credentials, wait 1-2 min after adding IP |
+| **OAuth redirect error**        | Ensure redirect URIs match exactly (port 3000 for dev, 30000 for K8s)             |
+| **`fetcher is not a function`** | Clear caches: `rm -rf .nuxt .output node_modules/.vite && npm install`            |
+| **E2E tests fail**              | Run `npx playwright install` to install browser dependencies                      |
+| **Session password error**      | Ensure `NUXT_SESSION_PASSWORD` is at least 32 characters                          |
 
 ## 📝 Course Requirements Met
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useAsyncData } from 'nuxt/app'
 import type { Order } from '~/types/entities'
 
@@ -24,6 +24,52 @@ const { refresh } = await useAsyncData('orders', async () => {
   } finally {
     loading.value = false
   }
+})
+
+// Listen for real-time order status updates via useSocket composable
+const { on, off } = useSocket()
+const authStore = useAuthStore()
+
+function handleOrderStatusUpdate(data: { orderId: string; status: string; userId?: string }) {
+  console.log('📦 Order status updated in orders page:', data)
+  // Find and update the order in the list
+  const orderIndex = orders.value.findIndex(o => o._id === data.orderId)
+  if (orderIndex !== -1) {
+    orders.value[orderIndex] = {
+      ...orders.value[orderIndex],
+      status: data.status as Order['status']
+    }
+    console.log('✅ Order status updated locally')
+  } else {
+    // If order not found in list, refresh all orders
+    console.log('🔄 Order not found, refreshing all orders')
+    refresh()
+  }
+}
+
+// Handler for broadcast events - filter by current user
+function handleOrderStatusBroadcast(data: { orderId: string; status: string; userId: string }) {
+  console.log('📡 Order status broadcast received:', data)
+  // Only process if this is for the current user
+  if (authStore.user && data.userId === authStore.user._id) {
+    console.log('✅ Broadcast is for current user, processing...')
+    handleOrderStatusUpdate(data)
+  } else {
+    console.log('⏭️ Broadcast is for another user, ignoring')
+  }
+}
+
+onMounted(() => {
+  console.log('📋 Orders page mounted, registering socket listeners')
+  console.log('👤 Current user ID:', authStore.user?._id)
+  on('order:status_updated', handleOrderStatusUpdate)
+  on('order:status_updated_broadcast', handleOrderStatusBroadcast)
+})
+
+onUnmounted(() => {
+  console.log('📋 Orders page unmounted, removing socket listeners')
+  off('order:status_updated', handleOrderStatusUpdate)
+  off('order:status_updated_broadcast', handleOrderStatusBroadcast)
 })
 
 const statusMeta: Record<string, { label: string; color: string }> = {

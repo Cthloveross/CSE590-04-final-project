@@ -5,18 +5,27 @@ import type { Socket } from 'socket.io'
 
 let io: SocketIOServer | null = null
 let socketClient: ClientSocket | null = null
+let isConnecting = false
 
 // Get or create a client connection to the standalone Socket.IO server
 function getSocketClient(): ClientSocket {
-  if (!socketClient || !socketClient.connected) {
-    const socketUrl = process.env.SOCKET_SERVER_URL || 'http://localhost:3001'
+  const socketUrl = process.env.SOCKET_SERVER_URL || 'http://localhost:3001'
+
+  if (!socketClient) {
+    console.log(`🔌 Creating socket client connection to: ${socketUrl}`)
+
     socketClient = SocketIOClient(socketUrl, {
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
       autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      timeout: 10000,
     })
-    
+
     socketClient.on('connect', () => {
-      console.log('🔌 Server socket client connected to Socket.IO server')
+      console.log(`✅ Server socket client connected to Socket.IO server at ${socketUrl}`)
+      isConnecting = false
       // Authenticate as server
       socketClient?.emit('authenticate', {
         userId: 'server',
@@ -24,11 +33,28 @@ function getSocketClient(): ClientSocket {
         role: 'server',
       })
     })
-    
-    socketClient.on('disconnect', () => {
-      console.log('❌ Server socket client disconnected')
+
+    socketClient.on('connect_error', (error) => {
+      console.error(`❌ Socket client connection error to ${socketUrl}:`, error.message)
+      isConnecting = false
+    })
+
+    socketClient.on('disconnect', (reason) => {
+      console.log(`⚠️ Server socket client disconnected: ${reason}`)
+    })
+
+    socketClient.on('reconnect', (attemptNumber) => {
+      console.log(`🔄 Socket client reconnected after ${attemptNumber} attempts`)
     })
   }
+
+  // Ensure connection
+  if (!socketClient.connected && !isConnecting) {
+    isConnecting = true
+    console.log(`🔄 Attempting to connect socket client to ${socketUrl}...`)
+    socketClient.connect()
+  }
+
   return socketClient
 }
 
@@ -145,18 +171,32 @@ export function getIO(): SocketIOServer | null {
 // Utility functions to emit events
 
 export function emitOrderStatusUpdate(orderId: string, status: string, userId: string) {
-  const client = getSocketClient()
+  try {
+    const client = getSocketClient()
 
-  const updateData = {
-    orderId,
-    status,
-    userId,
-    timestamp: Date.now(),
+    const updateData = {
+      orderId,
+      status,
+      userId,
+      timestamp: Date.now(),
+    }
+
+    console.log(`📦 Emitting order status update:`, updateData)
+    console.log(`📦 Socket client connected: ${client.connected}`)
+
+    if (client.connected) {
+      client.emit('server:order_status_update', updateData)
+      console.log(`✅ Order update emitted successfully`)
+    } else {
+      console.log(`⚠️ Socket not connected, queuing emit after connection...`)
+      client.once('connect', () => {
+        client.emit('server:order_status_update', updateData)
+        console.log(`✅ Order update emitted after reconnection`)
+      })
+    }
+  } catch (error) {
+    console.error(`❌ Error emitting order status update:`, error)
   }
-
-  // Send to Socket.IO server to broadcast
-  client.emit('server:order_status_update', updateData)
-  console.log(`📦 Emitted order update via socket client:`, updateData)
 }
 
 export function emitNewService(serviceData: any) {

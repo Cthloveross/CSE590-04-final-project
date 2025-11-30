@@ -53,6 +53,9 @@ spec:
                 configMapKeyRef:
                   name: gaming-platform-config
                   key: NUXT_PUBLIC_SOCKET_URL
+            # Internal Socket.IO server URL for server-to-server communication
+            - name: SOCKET_SERVER_URL
+              value: "http://gaming-platform-socket:3001"
             # From Secrets
             - name: MONGODB_URI
               valueFrom:

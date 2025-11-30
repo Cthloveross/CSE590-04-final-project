@@ -6,6 +6,7 @@ import { createClient } from 'redis'
 const PORT = process.env.SOCKET_PORT || 3001
 const CORS_ORIGIN = process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379'
+const INSTANCE_ID = `socket-${process.pid}-${Date.now()}`
 
 const httpServer = createServer()
 const io = new Server(httpServer, {
@@ -17,38 +18,95 @@ const io = new Server(httpServer, {
   transports: ['websocket', 'polling'],
 })
 
+// Redis clients for adapter and shared state
+let redisClient = null
+let isRedisConnected = false
+
 // Redis Adapter for Scale-out (multiple Socket.IO instances)
 async function setupRedisAdapter() {
   try {
     const pubClient = createClient({ url: REDIS_URL })
     const subClient = pubClient.duplicate()
+    redisClient = createClient({ url: REDIS_URL })
 
     pubClient.on('error', (err) => console.log('Redis Pub Client Error:', err.message))
     subClient.on('error', (err) => console.log('Redis Sub Client Error:', err.message))
+    redisClient.on('error', (err) => console.log('Redis Client Error:', err.message))
 
-    await Promise.all([pubClient.connect(), subClient.connect()])
+    await Promise.all([pubClient.connect(), subClient.connect(), redisClient.connect()])
 
     io.adapter(createAdapter(pubClient, subClient))
+    isRedisConnected = true
     console.log(`✅ Redis Adapter connected: ${REDIS_URL}`)
+    console.log(`✅ Instance ID: ${INSTANCE_ID}`)
     return true
   } catch (error) {
     console.log(`⚠️ Redis not available (${error.message}), running in single-instance mode`)
+    isRedisConnected = false
     return false
   }
+}
+
+// Get online count from Redis (shared across all instances)
+async function getOnlineCount() {
+  if (isRedisConnected && redisClient) {
+    try {
+      const count = await redisClient.sCard('online_users')
+      return count
+    } catch (error) {
+      console.log('Redis getOnlineCount error:', error.message)
+    }
+  }
+  // Fallback to local count
+  return onlineUsers.size
+}
+
+// Add user to Redis set
+async function addOnlineUser(socketId, userId) {
+  if (isRedisConnected && redisClient) {
+    try {
+      // Store both socketId and mapping
+      await redisClient.sAdd('online_users', socketId)
+      if (userId) {
+        await redisClient.hSet('user_sockets', socketId, userId)
+      }
+    } catch (error) {
+      console.log('Redis addOnlineUser error:', error.message)
+    }
+  }
+}
+
+// Remove user from Redis set
+async function removeOnlineUser(socketId) {
+  if (isRedisConnected && redisClient) {
+    try {
+      await redisClient.sRem('online_users', socketId)
+      await redisClient.hDel('user_sockets', socketId)
+    } catch (error) {
+      console.log('Redis removeOnlineUser error:', error.message)
+    }
+  }
+}
+
+// Broadcast online count to all clients (via Redis pub/sub)
+async function broadcastOnlineCount() {
+  const count = await getOnlineCount()
+  io.emit('users:online', { count })
 }
 
 // Setup Redis adapter (non-blocking, falls back to single instance if Redis unavailable)
 setupRedisAdapter()
 
-const onlineUsers = new Map()
+const onlineUsers = new Map() // Local map for this instance
 const chatHistory = [] // Store last 100 messages (Note: in scale-out mode, use Redis for shared state)
 
-io.on('connection', (socket) => {
-  console.log(`✅ Client connected: ${socket.id}`)
+io.on('connection', async (socket) => {
+  console.log(`✅ Client connected: ${socket.id} (Instance: ${INSTANCE_ID})`)
   onlineUsers.set(socket.id, { socketId: socket.id })
+  await addOnlineUser(socket.id, null)
 
-  // Broadcast online count
-  io.emit('users:online', { count: onlineUsers.size })
+  // Broadcast online count (from Redis)
+  await broadcastOnlineCount()
 
   // Send chat history to new user
   if (chatHistory.length > 0) {
@@ -56,12 +114,13 @@ io.on('connection', (socket) => {
   }
 
   // User authentication
-  socket.on('authenticate', (data) => {
+  socket.on('authenticate', async (data) => {
     console.log(`👤 User authenticated: ${data.email} (${data.userId})`)
     onlineUsers.set(socket.id, { ...data, socketId: socket.id })
+    await addOnlineUser(socket.id, data.userId)
     socket.join(`user:${data.userId}`)
     socket.join(`role:${data.role}`)
-    io.emit('users:online', { count: onlineUsers.size })
+    await broadcastOnlineCount()
   })
 
   // Chat message
@@ -118,12 +177,21 @@ io.on('connection', (socket) => {
   // Order status update from server
   socket.on('server:order_status_update', (data) => {
     console.log(`📦 Server: Order ${data.orderId} status: ${data.status} for user ${data.userId}`)
-    // Send to specific user
-    io.to(`user:${data.userId}`).emit('order:status_updated', {
+
+    const orderUpdatePayload = {
       orderId: data.orderId,
       status: data.status,
+      userId: data.userId,
       timestamp: data.timestamp
-    })
+    }
+
+    // Send to specific user room
+    io.to(`user:${data.userId}`).emit('order:status_updated', orderUpdatePayload)
+
+    // ALSO broadcast to ALL connected clients (fallback if user hasn't joined their room yet)
+    // Client-side will filter by userId
+    io.emit('order:status_updated_broadcast', orderUpdatePayload)
+
     // Also send notification
     io.to(`user:${data.userId}`).emit('notification:new', {
       type: 'order_update',
@@ -189,10 +257,11 @@ io.on('connection', (socket) => {
     io.emit('system:message', data)
   })
 
-  socket.on('disconnect', (reason) => {
+  socket.on('disconnect', async (reason) => {
     console.log(`❌ Client disconnected: ${socket.id} (${reason})`)
     onlineUsers.delete(socket.id)
-    io.emit('users:online', { count: onlineUsers.size })
+    await removeOnlineUser(socket.id)
+    await broadcastOnlineCount()
   })
 })
 
