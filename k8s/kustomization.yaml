@@ -7,7 +7,8 @@ namespace: gaming-platform
 resources:
   - namespace.yaml
   - configmap.yaml
-  - secrets.yaml
+  # NOTE: secrets.yaml is removed! Create secrets from .env instead:
+  # kubectl create secret generic gaming-platform-secrets --from-env-file=.env -n gaming-platform --dry-run=client -o yaml | kubectl apply -f -
   - deployment-redis.yaml
   - deployment-app.yaml
   - deployment-socket.yaml
