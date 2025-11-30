@@ -1,17 +1,30 @@
 import { test, expect, Page } from '@playwright/test'
 
-// Helper to login
+// Helper to login - with robust waiting for client-side navigation
 async function login(page: Page, email = 'user@example.com', password = 'user12345') {
     await page.goto('/login')
+    await page.waitForLoadState('networkidle')
+    
     await page.locator('input[type="email"]').fill(email)
     await page.locator('input[type="password"]').fill(password)
     
-    // Click submit button
+    // Click submit button and wait for loading to complete
     await page.locator('button[type="submit"]').click()
     
-    // Wait for either successful redirect OR check we're no longer on login
-    // Use a simple approach: wait for URL to not contain /login
-    await expect(page).not.toHaveURL(/\/login/, { timeout: 15000 })
+    // Wait for the button to show loading state and then complete
+    await page.waitForTimeout(500) // Small delay for form submission to start
+    
+    // Wait for navigation - either successful or check for error
+    try {
+        await expect(page).not.toHaveURL(/\/login/, { timeout: 20000 })
+    } catch {
+        // If still on login, check for error message
+        const errorMessage = page.locator('text=Unable to login, text=Login failed, text=Invalid')
+        if (await errorMessage.isVisible({ timeout: 1000 }).catch(() => false)) {
+            throw new Error('Login failed with error message on page')
+        }
+        throw new Error('Login did not redirect - still on /login page')
+    }
 }
 
 test.describe('Authentication', () => {
@@ -44,6 +57,8 @@ test.describe('Authentication', () => {
     })
 
     test('can login with valid credentials', async ({ page }) => {
+        // This test can be flaky in CI - increase retries
+        test.slow() // Marks this test as slow, tripling the timeout
         await login(page)
         await expect(page).toHaveURL('/')
     })

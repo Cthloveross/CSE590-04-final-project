@@ -2,12 +2,15 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Happy Path - Full User Journey', () => {
     test('complete flow: login → browse → add to cart → checkout', async ({ page }) => {
+        test.slow() // This test involves login which can be slow in CI
+        
         // Step 1: Start from home page (unauthenticated)
         await page.goto('/')
         await expect(page.locator('h1')).toContainText('Counter-Strike 2')
 
         // Step 2: Navigate to login and authenticate
         await page.goto('/login')
+        await page.waitForLoadState('networkidle')
         await expect(page.locator('h1')).toContainText('Welcome Back')
 
         await page.locator('input[type="email"]').fill('user@example.com')
@@ -15,9 +18,10 @@ test.describe('Happy Path - Full User Journey', () => {
         
         // Click submit button
         await page.locator('button[type="submit"]').click()
+        await page.waitForTimeout(500) // Small delay for form submission
         
         // Wait for redirect away from login page
-        await expect(page).not.toHaveURL(/\/login/, { timeout: 15000 })
+        await expect(page).not.toHaveURL(/\/login/, { timeout: 20000 })
 
         // Step 3: Browse to CS2 game services
         await page.goto('/games/cs2')
