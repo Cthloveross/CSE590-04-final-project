@@ -26,7 +26,7 @@ const features = [
   },
   {
     icon: '⚡',
-    title: 'Fast Delivery',
+    title: 'Fast Delivery ⚡',
     description: 'Most orders completed within 24-48 hours with live progress updates'
   },
   {
