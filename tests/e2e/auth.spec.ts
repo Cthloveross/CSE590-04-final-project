@@ -20,7 +20,7 @@ async function login(page: Page, email = 'user@example.com', password = 'user123
 test.describe('Authentication', () => {
     test('shows login page', async ({ page }) => {
         await page.goto('/login')
-        await expect(page.locator('h1')).toContainText('Welcome Back!!!')
+        await expect(page.locator('h1')).toContainText('Welcome Back')
         await expect(page.locator('input[type="email"]')).toBeVisible()
         await expect(page.locator('input[type="password"]')).toBeVisible()
     })

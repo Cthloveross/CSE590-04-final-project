@@ -16,12 +16,12 @@ await useAsyncData('home-games', async () => {
 const features = [
   {
     icon: '🎯',
-    title: 'Verified Boosters',
+    title: 'Verified Boosters 🎯',
     description: 'All our sellers are background-checked and reviewed by real players'
   },
   {
     icon: '🔒',
-    title: 'Secure Transactions',
+    title: 'Secure Transactions 🔒',
     description: 'Your credentials are encrypted and never shared beyond your assigned booster'
   },
   {
