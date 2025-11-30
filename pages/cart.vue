@@ -56,8 +56,23 @@ const proceedToCheckout = () => {
 
     <div class="grid gap-8 lg:grid-cols-3">
       <div class="space-y-4 lg:col-span-2">
-        <div v-if="!hasItems" class="card text-center text-sm text-slate-400">
-          Your cart is empty. Browse the catalog to add services.
+        <div v-if="!hasItems" class="card flex flex-col items-center gap-4 py-8 text-center">
+          <svg class="h-16 w-16 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <div>
+            <p class="text-lg font-medium text-slate-300">Your cart is empty</p>
+            <p class="text-sm text-slate-500">Browse the catalog to add services.</p>
+          </div>
+          <NuxtLink
+            to="/"
+            class="btn-primary mt-2 inline-flex items-center gap-2"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Continue Shopping
+          </NuxtLink>
         </div>
         <article
           v-for="item in cart.items"
@@ -122,6 +137,15 @@ const proceedToCheckout = () => {
         >
           Continue to checkout
         </button>
+        <NuxtLink
+          to="/"
+          class="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-slate-800/50 px-4 py-3 text-sm font-medium text-slate-300 transition-all hover:bg-slate-700/50 hover:text-white"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Continue Shopping
+        </NuxtLink>
       </aside>
     </div>
   </section>
