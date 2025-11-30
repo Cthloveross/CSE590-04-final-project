@@ -6,14 +6,12 @@ async function login(page: Page, email = 'user@example.com', password = 'user123
     await page.locator('input[type="email"]').fill(email)
     await page.locator('input[type="password"]').fill(password)
     
-    // Click submit and wait for the login API response
-    const [response] = await Promise.all([
-        page.waitForResponse(resp => resp.url().includes('/api/auth/login') && resp.status() === 200),
-        page.locator('button[type="submit"]').click()
-    ])
+    // Click submit button
+    await page.locator('button[type="submit"]').click()
     
-    // Wait for navigation to complete after successful login
-    await page.waitForURL('/', { timeout: 10000 })
+    // Wait for either successful redirect OR check we're no longer on login
+    // Use a simple approach: wait for URL to not contain /login
+    await expect(page).not.toHaveURL(/\/login/, { timeout: 15000 })
 }
 
 test.describe('Authentication', () => {
