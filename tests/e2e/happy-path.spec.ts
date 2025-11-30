@@ -13,14 +13,14 @@ test.describe('Happy Path - Full User Journey', () => {
         await page.locator('input[type="email"]').fill('user@example.com')
         await page.locator('input[type="password"]').fill('user12345')
         
-        // Click submit and wait for navigation away from login page
-        await page.locator('button[type="submit"]').click()
+        // Click submit and wait for the login API response
+        const [response] = await Promise.all([
+            page.waitForResponse(resp => resp.url().includes('/api/auth/login') && resp.status() === 200),
+            page.locator('button[type="submit"]').click()
+        ])
         
-        // Wait for successful login - URL should no longer be /login
-        await expect(async () => {
-            const url = page.url()
-            expect(url.includes('/login')).toBe(false)
-        }).toPass({ timeout: 15000 })
+        // Wait for navigation to complete after successful login
+        await page.waitForURL('/', { timeout: 10000 })
 
         // Step 3: Browse to CS2 game services
         await page.goto('/games/cs2')
