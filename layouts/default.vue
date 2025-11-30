@@ -210,7 +210,7 @@ const getRoleBadge = (role: string) => {
                 class="flex items-center gap-2 rounded-lg p-1.5 transition-all hover:bg-white/5"
               >
                 <div v-if="auth.user?.avatarUrl" class="h-8 w-8 overflow-hidden rounded-lg ring-2 ring-white/10">
-                  <img :src="auth.user.avatarUrl" :alt="auth.user.username" class="h-full w-full object-cover" />
+                  <img :src="auth.user.avatarUrl" :alt="auth.user.username" class="h-full w-full object-cover" referrerpolicy="no-referrer" />
                 </div>
                 <div v-else class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand to-cyan-500 text-xs font-bold text-white">
                   {{ getInitials(auth.user?.username || 'U') }}
@@ -237,7 +237,7 @@ const getRoleBadge = (role: string) => {
                   <div class="border-b border-white/5 px-3 py-3 mb-2">
                     <div class="flex items-center gap-3">
                       <div v-if="auth.user?.avatarUrl" class="h-10 w-10 overflow-hidden rounded-lg ring-2 ring-white/10">
-                        <img :src="auth.user.avatarUrl" :alt="auth.user.username" class="h-full w-full object-cover" />
+                        <img :src="auth.user.avatarUrl" :alt="auth.user.username" class="h-full w-full object-cover" referrerpolicy="no-referrer" />
                       </div>
                       <div v-else class="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-brand to-cyan-500 text-sm font-bold text-white">
                         {{ getInitials(auth.user?.username || 'U') }}

@@ -7,7 +7,7 @@ namespace: gaming-platform
 resources:
   - namespace.yaml
   - configmap.yaml
-  - secrets.yaml
+  # - secrets.yaml  # Create secret manually from .env file instead
   - deployment-app.yaml
   - deployment-socket.yaml
   - service.yaml

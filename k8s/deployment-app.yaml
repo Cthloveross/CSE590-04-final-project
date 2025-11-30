@@ -73,7 +73,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: gaming-platform-secrets
-                  key: NUXT_JWT_SECRET
+                  key: JWT_SECRET
             - name: NUXT_SESSION_PASSWORD
               valueFrom:
                 secretKeyRef:
