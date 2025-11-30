@@ -39,6 +39,13 @@ async function setupRedisAdapter() {
     isRedisConnected = true
     console.log(`✅ Redis Adapter connected: ${REDIS_URL}`)
     console.log(`✅ Instance ID: ${INSTANCE_ID}`)
+    
+    // Clean up stale online users data on startup
+    // This handles the case where pods restart without proper cleanup
+    await redisClient.del('online_users')
+    await redisClient.del('user_sockets')
+    console.log(`🧹 Cleaned up stale online users data`)
+    
     return true
   } catch (error) {
     console.log(`⚠️ Redis not available (${error.message}), running in single-instance mode`)
@@ -102,25 +109,33 @@ const chatHistory = [] // Store last 100 messages (Note: in scale-out mode, use 
 
 io.on('connection', async (socket) => {
   console.log(`✅ Client connected: ${socket.id} (Instance: ${INSTANCE_ID})`)
-  onlineUsers.set(socket.id, { socketId: socket.id })
-  await addOnlineUser(socket.id, null)
-
-  // Broadcast online count (from Redis)
-  await broadcastOnlineCount()
+  onlineUsers.set(socket.id, { socketId: socket.id, isServer: false })
+  
+  // Don't add to online_users yet - wait for authentication
+  // This prevents server-side socket clients from being counted
 
   // Send chat history to new user
   if (chatHistory.length > 0) {
     socket.emit('chat:history', chatHistory)
   }
 
-  // User authentication
+  // User authentication - this is when we count the user as online
   socket.on('authenticate', async (data) => {
-    console.log(`👤 User authenticated: ${data.email} (${data.userId})`)
-    onlineUsers.set(socket.id, { ...data, socketId: socket.id })
-    await addOnlineUser(socket.id, data.userId)
+    console.log(`👤 User authenticated: ${data.email} (${data.userId}) role: ${data.role}`)
+    
+    // Check if this is a server connection (from Nuxt API)
+    const isServerConnection = data.role === 'server' || data.userId === 'server'
+    
+    onlineUsers.set(socket.id, { ...data, socketId: socket.id, isServer: isServerConnection })
+    
+    if (!isServerConnection) {
+      // Only count real users, not server connections
+      await addOnlineUser(socket.id, data.userId)
+      await broadcastOnlineCount()
+    }
+    
     socket.join(`user:${data.userId}`)
     socket.join(`role:${data.role}`)
-    await broadcastOnlineCount()
   })
 
   // Chat message
@@ -258,10 +273,16 @@ io.on('connection', async (socket) => {
   })
 
   socket.on('disconnect', async (reason) => {
-    console.log(`❌ Client disconnected: ${socket.id} (${reason})`)
+    const userData = onlineUsers.get(socket.id)
+    const isServer = userData?.isServer || false
+    console.log(`❌ Client disconnected: ${socket.id} (${reason}) isServer: ${isServer}`)
     onlineUsers.delete(socket.id)
-    await removeOnlineUser(socket.id)
-    await broadcastOnlineCount()
+    
+    // Only update online count if this was a real user, not a server connection
+    if (!isServer && userData?.userId) {
+      await removeOnlineUser(socket.id)
+      await broadcastOnlineCount()
+    }
   })
 })
 
