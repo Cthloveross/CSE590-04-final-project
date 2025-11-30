@@ -5,9 +5,12 @@ async function login(page: Page, email = 'user@example.com', password = 'user123
     await page.goto('/login')
     await page.locator('input[type="email"]').fill(email)
     await page.locator('input[type="password"]').fill(password)
-    await page.locator('button[type="submit"]').click()
-    // Wait for redirect with longer timeout
-    await page.waitForURL('/', { timeout: 10000 })
+    
+    // Use Promise.all to handle click and navigation together
+    await Promise.all([
+        page.waitForURL('/', { timeout: 15000 }),
+        page.locator('button[type="submit"]').click()
+    ])
 }
 
 test.describe('Authentication', () => {

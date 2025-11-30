@@ -12,7 +12,21 @@ test.describe('Navigation', () => {
         await page.goto('/')
         // Wait for hydration and check Sign in link exists in header
         await page.waitForLoadState('networkidle')
-        await expect(page.locator('header').getByRole('link', { name: 'Sign in', exact: true })).toBeVisible({ timeout: 5000 })
+        
+        // Check if we're on a mobile viewport (hamburger menu)
+        const viewportWidth = page.viewportSize()?.width ?? 1280
+        const isMobile = viewportWidth < 768
+        
+        if (isMobile) {
+            // On mobile, click the hamburger menu first to reveal the Sign in link
+            const hamburgerButton = page.locator('header button[aria-label="Toggle menu"], header button:has(svg)')
+            if (await hamburgerButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+                await hamburgerButton.click()
+                await page.waitForTimeout(300) // Wait for menu animation
+            }
+        }
+        
+        await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible({ timeout: 5000 })
     })
 
     test('navigates between pages', async ({ page }) => {

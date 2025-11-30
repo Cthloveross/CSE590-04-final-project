@@ -8,24 +8,29 @@
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 
-// Load environment from .env
-import { readFileSync } from 'fs'
+// Load environment from .env only if MONGODB_URI is not already set
+import { readFileSync, existsSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const envPath = join(__dirname, '../.env')
 
-try {
-  const envFile = readFileSync(envPath, 'utf-8')
-  envFile.split('\n').forEach(line => {
-    const [key, ...values] = line.split('=')
-    if (key && values.length) {
-      process.env[key.trim()] = values.join('=').trim()
-    }
-  })
-} catch (err) {
-  console.warn('⚠️  No .env file found, using defaults')
+// Only read .env file if MONGODB_URI is not already set (e.g., in CI)
+if (!process.env.MONGODB_URI && existsSync(envPath)) {
+  try {
+    const envFile = readFileSync(envPath, 'utf-8')
+    envFile.split('\n').forEach(line => {
+      const [key, ...values] = line.split('=')
+      if (key && values.length) {
+        process.env[key.trim()] = values.join('=').trim()
+      }
+    })
+  } catch (err) {
+    console.warn('⚠️  Could not read .env file, using environment variables')
+  }
+} else if (!process.env.MONGODB_URI) {
+  console.warn('⚠️  No .env file found, using environment variables')
 }
 
 const MONGODB_URI = process.env.MONGODB_URI
