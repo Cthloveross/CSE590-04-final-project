@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAsyncData } from 'nuxt/app'
+import { useAsyncData, useRequestFetch } from 'nuxt/app'
 import type { Order, OrderStatus } from '~/types/entities'
 
 declare const definePageMeta: (meta: Record<string, any>) => void
 
 definePageMeta({ middleware: ['auth', 'admin'] })
 
-const orders = ref<Order[]>([])
-const loading = ref(true)
 const message = ref('')
 const selectedStatus = ref<'all' | OrderStatus>('all')
+
+// Use useRequestFetch to forward cookies during SSR
+const requestFetch = useRequestFetch()
 
 const statusOptions: { value: OrderStatus; label: string }[] = [
   { value: 'pending', label: 'Pending' },
@@ -19,11 +20,6 @@ const statusOptions: { value: OrderStatus; label: string }[] = [
   { value: 'cancelled', label: 'Cancelled' },
 ]
 
-const filteredOrders = computed(() => {
-  if (selectedStatus.value === 'all') return orders.value
-  return orders.value.filter((order) => order.status === selectedStatus.value)
-})
-
 const statusBadge: Record<OrderStatus, string> = {
   pending: 'bg-amber-500/20 text-amber-100',
   in_progress: 'bg-sky-500/20 text-sky-100',
@@ -31,19 +27,23 @@ const statusBadge: Record<OrderStatus, string> = {
   cancelled: 'bg-rose-500/20 text-rose-100',
 }
 
-const { refresh } = await useAsyncData('admin-orders', async () => {
-  loading.value = true
-  message.value = ''
+const { data: orders, status, refresh } = await useAsyncData('admin-orders', async () => {
   try {
-    const response = await $fetch<Order[]>('/api/admin/orders')
-    orders.value = response
-    return response
+    return await requestFetch<Order[]>('/api/admin/orders')
   } catch (err: any) {
     message.value = err?.data?.message || err?.message || 'Unable to load orders'
     throw err
-  } finally {
-    loading.value = false
   }
+}, {
+  default: () => [] as Order[],
+})
+
+const loading = computed(() => status.value === 'pending')
+
+const filteredOrders = computed(() => {
+  const ordersList = orders.value ?? []
+  if (selectedStatus.value === 'all') return ordersList
+  return ordersList.filter((order) => order.status === selectedStatus.value)
 })
 
 const updateStatus = async (order: Order, status: OrderStatus) => {

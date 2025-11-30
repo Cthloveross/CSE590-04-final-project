@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useAsyncData } from 'nuxt/app'
+import { useAsyncData, useRequestFetch } from 'nuxt/app'
 import type { Service, Game } from '~/types/entities'
 import { useCatalogStore } from '~/stores/catalog'
 
@@ -9,8 +9,9 @@ declare const definePageMeta: (meta: Record<string, any>) => void
 // Allow both sellers and admins to manage services
 definePageMeta({ middleware: ['auth', 'seller'] })
 
-const services = ref<Service[]>([])
-const loading = ref(true)
+// Use useRequestFetch to forward cookies during SSR
+const requestFetch = useRequestFetch()
+
 const message = ref('')
 const messageType = ref<'success' | 'error'>('success')
 const catalog = useCatalogStore()
@@ -43,7 +44,7 @@ const selectedTypeFilter = ref<string>('all')
 const searchQuery = ref('')
 
 const filteredServices = computed(() => {
-  let result = services.value.filter(s => s.isActive)
+  let result = (services.value ?? []).filter(s => s.isActive)
 
   if (selectedGameFilter.value !== 'all') {
     result = result.filter(s => s.gameId === selectedGameFilter.value)
@@ -125,19 +126,17 @@ const submitProvide = async () => {
   setTimeout(() => { message.value = '' }, 4000)
 }
 
-const { refresh } = await useAsyncData('seller-services', async () => {
-  loading.value = true
-  try {
-    const [servicesResponse] = await Promise.all([
-      $fetch<Service[]>('/api/services'),
-      catalog.games.length ? Promise.resolve() : catalog.fetchGames(),
-    ])
-    services.value = servicesResponse
-    return servicesResponse
-  } finally {
-    loading.value = false
-  }
+const { data: services, status, refresh } = await useAsyncData('seller-services', async () => {
+  await Promise.all([
+    Promise.resolve(), // placeholder to keep the Promise.all pattern
+    catalog.games.length ? Promise.resolve() : catalog.fetchGames(),
+  ])
+  return await requestFetch<Service[]>('/api/services')
+}, {
+  default: () => [] as Service[],
 })
+
+const loading = computed(() => status.value === 'pending')
 
 const games = computed<Game[]>(() => catalog.games)
 </script>

@@ -1,20 +1,36 @@
-import { defineNuxtRouteMiddleware, navigateTo } from 'nuxt/app'
+import { defineNuxtRouteMiddleware, navigateTo, useRequestFetch } from 'nuxt/app'
 import { useAuthStore } from '~/stores/auth'
+import type { UserProfile } from '~/types/entities'
 
 export default defineNuxtRouteMiddleware(async () => {
   const auth = useAuthStore()
 
-  if (!auth.user) {
-    try {
-      await auth.fetchProfile()
-    } catch {
-      /* ignore */
+  // If user is already in store, check role directly
+  if (auth.user) {
+    if (!auth.isSeller && !auth.isAdmin) {
+      return navigateTo('/')
     }
+    return
   }
 
-  // Allow sellers and admins
-  if (!auth.isSeller && !auth.isAdmin) {
-    return navigateTo('/')
+  // On SSR or when store is empty, fetch profile with proper cookie forwarding
+  try {
+    const requestFetch = useRequestFetch()
+    const profile = await requestFetch<UserProfile | null>('/api/auth/me')
+    
+    if (profile) {
+      auth.user = profile
+      // Check if user is seller or admin
+      if (profile.role !== 'seller' && profile.role !== 'admin') {
+        return navigateTo('/')
+      }
+      return
+    }
+  } catch {
+    /* ignore fetch errors */
   }
+
+  // Not authenticated or not seller/admin
+  return navigateTo('/')
 })
 

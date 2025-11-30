@@ -43,26 +43,24 @@ A **CS2 game services marketplace** with **CI/CD pipeline** where authenticated 
 
 ## 🧱 Architecture
 
-| Layer     | Notes                                                                         |
-| --------- | ----------------------------------------------------------------------------- |
-| UI        | Nuxt 3 pages + layouts, TailwindCSS, modern gaming aesthetic                  |
-| State     | Pinia (`auth`, `catalog`, `cart`) with persisted auth/cart and SSR-safe fetch |
-| APIs      | Nitro server routes under `server/api/*`, Zod validation, JWT middleware      |
-| Auth      | nuxt-auth-utils for OAuth, custom JWT for sessions                            |
-| Data      | MongoDB Atlas (cloud database), Mongoose models                               |
-| Real-Time | Socket.IO for bidirectional event-based communication                         |
-| Tooling   | Node 22+, npm, Vitest                                                         |
+| Layer | Notes |
+| --- | --- |
+| UI | Nuxt 3 pages + layouts, TailwindCSS, modern gaming aesthetic |
+| State | Pinia (`auth`, `catalog`, `cart`) with persisted auth/cart and SSR-safe fetch |
+| APIs | Nitro server routes under `server/api/*`, Zod validation, JWT middleware |
+| Auth | nuxt-auth-utils for OAuth, custom JWT for sessions |
+| Data | MongoDB Atlas (cloud database), Mongoose models |
+| Real-Time | Socket.IO for bidirectional event-based communication |
+| Tooling | Node 22+, npm, Vitest |
 
 ## 🛠 Prerequisites
 
 - **Node.js 22+** (tested on 22.11)
 - **npm 10+** (ships with Node)
 - **MongoDB Atlas** – Cloud database (free M0 cluster available)
-- **OAuth Apps** (optional) – Google/GitHub OAuth for social login
+- **OAuth Apps** – Google Cloud Console + GitHub OAuth app (for OAuth login)
 
 ## 🚀 Quick Start
-
-### macOS / Linux
 
 ```bash
 # 1. Clone the repository
@@ -72,130 +70,141 @@ cd CSE590-04-final-project
 # 2. Install dependencies
 npm install
 
-# 3. Configure environment variables
+# 3. Install Playwright browsers (for E2E tests)
+npx playwright install
+
+# 4. Configure environment variables
 cp .env.example .env
-# Edit .env - see "Environment Setup" section below for details
+# Edit .env with your MongoDB Atlas URI and OAuth credentials
 
-# 4. Seed the database
+# 5. Set up MongoDB Atlas (REQUIRED)
+# - Visit https://cloud.mongodb.com/
+# - Navigate to Network Access → Add IP Address
+# - Add your current IP or allow from anywhere (0.0.0.0/0) for development
+# - Wait 1-2 minutes for the change to take effect
+
+# 6. Seed the database
 node scripts/seed.mjs
 
-# 5. Start development server
-npm run dev
-```
-
-### Windows (PowerShell)
-
-```powershell
-# 1. Clone the repository
-git clone https://github.com/Cthloveross/CSE590-04-final-project.git
-cd CSE590-04-final-project
-
-# 2. Install dependencies
-npm install
-
-# 3. Configure environment variables
-copy .env.example .env
-# Edit .env with notepad or VS Code - see "Environment Setup" section below
-
-# 4. Seed the database
-node scripts/seed.mjs
-
-# 5. Start development server
+# 7. Start development server
 npm run dev
 ```
 
 Visit **http://localhost:3000**
 
-> **First time setup?** See [Environment Setup](#-environment-setup) for MongoDB Atlas and OAuth configuration.
-
 ### Demo Accounts
 
-| Role  | Email               | Password     |
-| ----- | ------------------- | ------------ |
+| Role | Email | Password |
+| --- | --- | --- |
 | Admin | `admin@example.com` | `admin12345` |
-| User  | `user@example.com`  | `user12345`  |
+| User | `user@example.com` | `user12345` |
 
-## 🔧 Environment Setup
+## 🔐 OAuth Setup
 
-This section covers all environment configuration needed to run the project.
+### Google OAuth
 
-### MongoDB Atlas (REQUIRED)
-
-This project uses **MongoDB Atlas** (cloud database) exclusively.
-
-1. **Create Account & Cluster**
-   - Visit [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and sign up (free)
-   - Create a free M0 cluster
-
-2. **Configure Network Access** ⚠️ CRITICAL
-   - Navigate to **Network Access** → **Add IP Address**
-   - Add your current IP (or `0.0.0.0/0` for development)
-   - Wait 1-2 minutes for changes to take effect
-
-3. **Create Database User**
-   - Navigate to **Database Access** → **Add New Database User**
-   - Create user with **Read and Write** permissions
-
-4. **Get Connection String**
-   - Click **Connect** → **Connect your application**
-   - Copy the connection string, replace `<password>` and set database to `game-services`
-
-5. **Update `.env`**
-   ```env
-   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/game-services?retryWrites=true&w=majority
-   NUXT_MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/game-services?retryWrites=true&w=majority
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Navigate to **APIs & Services → Credentials**
+4. Click **Create Credentials → OAuth client ID**
+5. Select **Web application**
+6. Add authorized redirect URIs:
+   - `http://localhost:3000/api/auth/callback/google` (development)
+   - `https://your-domain.com/api/auth/callback/google` (production)
+7. Copy Client ID and Client Secret to `.env`:
+   ```
+   NUXT_OAUTH_GOOGLE_CLIENT_ID=your-client-id
+   NUXT_OAUTH_GOOGLE_CLIENT_SECRET=your-client-secret
    ```
 
-### JWT & Session (REQUIRED)
+### GitHub OAuth
 
-Generate secure secrets (at least 32 characters each):
-```bash
-# Generate random secrets
-openssl rand -base64 32
-```
-
-```env
-JWT_SECRET=your-generated-secret
-NUXT_JWT_SECRET=your-generated-secret
-NUXT_SESSION_PASSWORD=your-session-password-at-least-32-chars
-```
-
-### OAuth (OPTIONAL)
-
-OAuth is optional - you can use email/password login without it.
-
-**Google OAuth:**
-1. Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
-2. Create OAuth client ID (Web application)
-3. Add redirect URI: `http://localhost:3000/api/auth/callback/google`
-4. Copy Client ID and Secret to `.env`
-
-**GitHub OAuth:**
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
-2. Create New OAuth App
-3. Set callback URL: `http://localhost:3000/api/auth/callback/github`
-4. Copy Client ID and Secret to `.env`
+2. Click **New OAuth App**
+3. Set Authorization callback URL:
+   - `http://localhost:3000/api/auth/callback/github` (development)
+   - `https://your-domain.com/api/auth/callback/github` (production)
+4. Copy Client ID and Client Secret to `.env`:
+   ```
+   NUXT_OAUTH_GITHUB_CLIENT_ID=your-client-id
+   NUXT_OAUTH_GITHUB_CLIENT_SECRET=your-client-secret
+   ```
 
-### Seed the Database
+### Session Password
 
-```bash
-node scripts/seed.mjs
+Generate a secure session password (at least 32 characters) for cookie encryption:
+```
+NUXT_SESSION_PASSWORD=your-super-secret-session-password-at-least-32-chars
 ```
 
-Expected output:
+## 🌐 MongoDB Setup
+
+### ⚠️ Important: This Project Uses MongoDB Atlas ONLY
+
+This project is configured to use **MongoDB Atlas** (cloud database) exclusively. Local MongoDB is not supported.
+
+### Setup Steps
+
+1. **Create MongoDB Atlas Account**
+   - Visit [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+   - Sign up for a free account
+
+2. **Create a Cluster**
+   - Create a free M0 cluster (sufficient for development)
+   - Choose your preferred cloud provider and region
+
+3. **Configure Network Access** (CRITICAL)
+   - Navigate to **Network Access** in the left sidebar
+   - Click **Add IP Address**
+   - Choose one of:
+     - **Add Current IP Address** (recommended for security)
+     - **Allow Access from Anywhere** (`0.0.0.0/0` - convenient for development)
+   - Click **Confirm**
+   - ⏱️ Wait 1-2 minutes for changes to take effect
+
+4. **Create Database User**
+   - Navigate to **Database Access**
+   - Click **Add New Database User**
+   - Create a user with **Read and Write** permissions
+   - Save the username and password
+
+5. **Get Connection String**
+   - Go back to **Database** view
+   - Click **Connect** on your cluster
+   - Choose **Connect your application**
+   - Copy the connection string
+   - Replace `<password>` with your actual password
+   - Replace `<dbname>` with `game-services`
+
+6. **Update `.env` File**
+   ```env
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/game-services?retryWrites=true&w=majority
+   ```
+
+7. **Seed the Database**
+   ```bash
+   node scripts/seed.mjs
+   ```
+
+### ✅ Expected Output
 ```
 🌱 Starting database seed...
 ✅ Connected to MongoDB Atlas
+✅ Database cleared
+✅ Created 2 games
+✅ Created 2 users
+✅ Created 3 services
 ✅ Database seeded successfully!
 ```
 
-### Common Setup Issues
+### ❌ Common Issues
 
-| Error                              | Solution                                      |
-| ---------------------------------- | --------------------------------------------- |
+| Error | Solution |
+|-------|----------|
 | "Could not connect to any servers" | Add your IP to Atlas Network Access whitelist |
-| "Authentication failed"            | Check username/password in connection string  |
-| Connection timeout                 | Wait 1-2 minutes after adding IP to whitelist |
+| "Authentication failed" | Check username/password in connection string |
+| "Database name not specified" | Ensure `/game-services` is in the URI |
+| Connection timeout | Wait 1-2 minutes after adding IP to whitelist |
 
 ## 📋 REST API Endpoints
 
@@ -232,154 +241,79 @@ Expected output:
 
 ## 🧪 Development Commands
 
-| Task                    | Command                 |
-| ----------------------- | ----------------------- |
-| Start dev server        | `npm run dev`           |
-| Build production        | `npm run build`         |
-| Preview production      | `npm run preview`       |
-| Run unit tests          | `npm run test`          |
-| Run E2E tests           | `npm run test:e2e`      |
-| Run E2E tests (UI mode) | `npm run test:e2e:ui`   |
-| Regenerate types        | `npx nuxi prepare`      |
-| Seed database           | `node scripts/seed.mjs` |
+| Task | Command |
+| --- | --- |
+| Start dev server | `npm run dev` |
+| Build production | `npm run build` |
+| Preview production | `npm run preview` |
+| Run unit tests | `npm run test` |
+| Run E2E tests | `npm run test:e2e` |
+| Run E2E tests (UI mode) | `npm run test:e2e:ui` |
+| Regenerate types | `npx nuxi prepare` |
+| Seed database | `node scripts/seed.mjs` |
 
-## 🧪 E2E Testing
+## 🐳 Docker Commands
 
-This project includes a comprehensive E2E test suite using **Playwright**, covering all major user flows across multiple browsers.
+| Task | Command |
+| --- | --- |
+| Build Docker image | `docker build -t gaming-platform:latest .` |
+| Run with Docker Compose | `docker-compose up -d` |
+| Stop Docker Compose | `docker-compose down` |
+| Rebuild and restart | `docker-compose up --build -d` |
+| View logs | `docker-compose logs -f app` |
 
-### Test Structure
+**Note**: Docker Compose uses MongoDB Atlas from your `.env` file. Ensure:
+- `.env` file exists with valid `MONGODB_URI`
+- Your IP is whitelisted in MongoDB Atlas
+- All OAuth credentials are set
 
-| Test File            | Description                                                  |
-| -------------------- | ------------------------------------------------------------ |
-| `home.spec.ts`       | Home page display, hero section, feature highlights          |
-| `auth.spec.ts`       | Login page, OAuth buttons, form validation, protected routes |
-| `catalog.spec.ts`    | Game listings, CS2 page, service details                     |
-| `cart.spec.ts`       | Cart authentication requirement                              |
-| `checkout.spec.ts`   | Checkout authentication requirement                          |
-| `orders.spec.ts`     | Orders authentication requirement                            |
-| `navigation.spec.ts` | Header navigation, login link visibility                     |
-| `api.spec.ts`        | REST API endpoint testing (games, services, auth)            |
-| `socket.spec.ts`     | Socket.IO server health check (local + K8s ports)            |
-| `happy-path.spec.ts` | Complete user journey: login → browse → cart → checkout      |
-
-### Running Tests
-
-```bash
-# Run all E2E tests
-npm run test:e2e
-
-# Run tests with UI mode (interactive)
-npm run test:e2e:ui
-
-# Run specific test file
-npx playwright test tests/e2e/happy-path.spec.ts
-
-# Run tests with verbose output
-npx playwright test --reporter=list
-```
-
-### Browser Coverage
-
-Tests run across **5 browser configurations**:
-- Chromium (Desktop)
-- Firefox (Desktop)
-- WebKit/Safari (Desktop)
-- Mobile Chrome (Android)
-- Mobile Safari (iOS)
-
-### Happy Path Test
-
-The `happy-path.spec.ts` tests the complete user journey:
-
-1. **Start unauthenticated** → Visit home page
-2. **Login** → Authenticate with demo credentials
-3. **Browse catalog** → Navigate to CS2 services
-4. **View service** → Click on service details
-5. **Add to cart** → Add service to shopping cart
-6. **Go to cart** → Review cart contents
-7. **Checkout** → Proceed to checkout page
-
-### Socket.IO Testing
-
-Socket tests automatically detect the server on:
-- Local development: `localhost:3001`
-- Kubernetes NodePort: `localhost:30001`
-
-### Test Results
-
-```
-145 passed (17s)
-- 10 test files
-- 29 unique tests
-- 5 browser configurations
-```
-
-## 🐳 Docker & Kubernetes Deployment
-
-### Docker Compose (Simple)
-
-```bash
-# Build and run
-docker-compose up -d
-
-# View logs
-docker-compose logs -f app
-
-# Stop
-docker-compose down
-```
-
-### ☸️ Kubernetes Deployment
+## ☸️ Kubernetes Deployment
 
 This project supports deployment to Kubernetes. See [k8s/README.md](k8s/README.md) for detailed instructions.
 
-**Quick Start - macOS/Linux (Docker Desktop):**
+### Quick Start (Docker Desktop Kubernetes)
 
 ```bash
 # 1. Enable Kubernetes in Docker Desktop
+# Docker Desktop → Settings → Kubernetes → Enable Kubernetes
 
-# 2. Build Docker image
+# 2. Build Docker image with Socket.IO URL
 docker build \
   --build-arg NUXT_PUBLIC_SOCKET_URL=http://localhost:30001 \
   --build-arg NUXT_PUBLIC_SITE_URL=http://localhost:30000 \
   -t gaming-platform:latest .
 
-# 3. Create namespace and secrets from .env
-kubectl create namespace gaming-platform
-kubectl create secret generic gaming-platform-secrets \
-  --from-env-file=.env \
-  -n gaming-platform \
-  --dry-run=client -o yaml | kubectl apply -f -
+# 3. Update secrets (edit k8s/secrets.yaml with your credentials)
 
-# 4. Deploy
+# 4. Deploy to Kubernetes
 kubectl apply -k k8s/
+
+# 5. Check deployment status
+kubectl get all -n gaming-platform
 ```
 
-**Quick Start - Windows (PowerShell):**
+### Access the Application
 
-```powershell
-# 1. Enable Kubernetes in Docker Desktop
+| Service | URL |
+| --- | --- |
+| Application | http://localhost:30000 |
+| Socket.IO Server | http://localhost:30001 |
 
-# 2. Build Docker image
-docker build `
-  --build-arg NUXT_PUBLIC_SOCKET_URL=http://localhost:30001 `
-  --build-arg NUXT_PUBLIC_SITE_URL=http://localhost:30000 `
-  -t gaming-platform:latest .
+### Useful Kubernetes Commands
 
-# 3. Create namespace and secrets from .env
-kubectl create namespace gaming-platform
-kubectl create secret generic gaming-platform-secrets `
-  --from-env-file=.env `
-  -n gaming-platform `
-  --dry-run=client -o yaml | kubectl apply -f -
+```bash
+# View pod logs
+kubectl logs -f deployment/gaming-platform-app -n gaming-platform
 
-# 4. Deploy
-kubectl apply -k k8s/
+# Scale deployment
+kubectl scale deployment gaming-platform-app --replicas=3 -n gaming-platform
+
+# Restart deployment
+kubectl rollout restart deployment/gaming-platform-app -n gaming-platform
+
+# Delete all resources
+kubectl delete -k k8s/
 ```
-
-**Access:** http://localhost:30000 (App) | http://localhost:30001 (Socket.IO)
-
-> **OAuth in K8s:** Add `http://localhost:30000/api/auth/callback/google` and `http://localhost:30000/api/auth/callback/github` to your OAuth app settings.
 
 ## 🚀 CI/CD Pipeline
 
@@ -456,28 +390,54 @@ For detailed CI/CD setup and demo instructions, see:
 
 ## 🎮 User Roles & Permissions
 
-| Feature             | User (Buyer) | Seller | Admin |
-| ------------------- | :----------: | :----: | :---: |
-| Browse catalog      |      ✅       |   ✅    |   ✅   |
-| View auctions       |      ✅       |   ✅    |   ✅   |
-| Place bids          |      ✅       |   ✅    |   ✅   |
-| Add to cart         |      ✅       |   ✅    |   ✅   |
-| Place orders        |      ✅       |   ✅    |   ✅   |
-| View own orders     |      ✅       |   ✅    |   ✅   |
-| Create listings     |      ❌       |   ✅    |   ✅   |
-| Manage listings     |      ❌       |   ✅    |   ✅   |
-| View all orders     |      ❌       |   ❌    |   ✅   |
-| Manage order status |      ❌       |   ❌    |   ✅   |
+| Feature | User (Buyer) | Seller | Admin |
+| --- | :---: | :---: | :---: |
+| Browse catalog | ✅ | ✅ | ✅ |
+| View auctions | ✅ | ✅ | ✅ |
+| Place bids | ✅ | ✅ | ✅ |
+| Add to cart | ✅ | ✅ | ✅ |
+| Place orders | ✅ | ✅ | ✅ |
+| View own orders | ✅ | ✅ | ✅ |
+| Create listings | ❌ | ✅ | ✅ |
+| Manage listings | ❌ | ✅ | ✅ |
+| View all orders | ❌ | ❌ | ✅ |
+| Manage order status | ❌ | ❌ | ✅ |
 
 ## 🧹 Troubleshooting
 
-| Symptom                         | Fix                                                                               |
-| ------------------------------- | --------------------------------------------------------------------------------- |
-| **MongoDB connection fails**    | Check Atlas IP whitelist, verify `.env` credentials, wait 1-2 min after adding IP |
-| **OAuth redirect error**        | Ensure redirect URIs match exactly (port 3000 for dev, 30000 for K8s)             |
-| **`fetcher is not a function`** | Clear caches: `rm -rf .nuxt .output node_modules/.vite && npm install`            |
-| **E2E tests fail**              | Run `npx playwright install` to install browser dependencies                      |
-| **Session password error**      | Ensure `NUXT_SESSION_PASSWORD` is at least 32 characters                          |
+| Symptom | Fix |
+| --- | --- |
+| **MongoDB connection fails** | 1. Check Atlas IP whitelist<br>2. Verify credentials in `.env`<br>3. Wait 1-2 minutes after adding IP<br>4. Ensure database name is `game-services` |
+| **OAuth redirect error** | Ensure redirect URIs match exactly in OAuth provider settings |
+| **`fetcher is not a function`** | Clear caches: `rm -rf .nuxt .output node_modules/.vite && npm install && npm run dev` |
+| **Hydration mismatch** | Clear browser cache, restart dev server |
+| **Docker build fails** | Ensure `.env` file exists and `MONGODB_URI` is set |
+| **E2E tests fail** | Run `npx playwright install` to install browser dependencies |
+| **Session password error** | Ensure `NUXT_SESSION_PASSWORD` is at least 32 characters |
+
+### MongoDB Atlas Specific Issues
+
+```bash
+# Test MongoDB connection
+node -e "
+const mongoose = require('mongoose');
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('✅ MongoDB Atlas connected successfully!');
+    process.exit(0);
+  })
+  .catch(err => {
+    console.error('❌ Connection failed:', err.message);
+    process.exit(1);
+  });
+"
+```
+
+### Getting Help
+
+1. Check MongoDB Atlas connection: https://cloud.mongodb.com/
+2. Review CI/CD logs: https://github.com/Cthloveross/CSE590-04-final-project/actions
+3. See detailed setup: [CI_CD_SETUP.md](CI_CD_SETUP.md)
 
 ## 📝 Course Requirements Met
 

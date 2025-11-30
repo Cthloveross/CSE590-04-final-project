@@ -22,10 +22,16 @@ const adminLinks = [
 ]
 
 const showAdminMenu = ref(false)
+const showMobileMenu = ref(false)
 
 const currentYear = new Date().getFullYear()
 const isHydrated = ref(false)
 const showUserMenu = ref(false)
+
+// Close mobile menu when route changes
+watch(() => route.path, () => {
+  showMobileMenu.value = false
+})
 
 const isActiveLink = (to: string) => {
   if (to === '/') {
@@ -113,7 +119,8 @@ const getRoleBadge = (role: string) => {
           </div>
         </NuxtLink>
 
-        <nav class="flex items-center gap-1">
+        <!-- Desktop Navigation -->
+        <nav class="hidden md:flex items-center gap-1">
           <template v-for="link in links" :key="link.to">
             <NuxtLink
               v-if="isHydrated && shouldShowLink(link)"
@@ -210,7 +217,7 @@ const getRoleBadge = (role: string) => {
                 class="flex items-center gap-2 rounded-lg p-1.5 transition-all hover:bg-white/5"
               >
                 <div v-if="auth.user?.avatarUrl" class="h-8 w-8 overflow-hidden rounded-lg ring-2 ring-white/10">
-                  <img :src="auth.user.avatarUrl" :alt="auth.user.username" class="h-full w-full object-cover" referrerpolicy="no-referrer" />
+                  <img :src="auth.user.avatarUrl" :alt="auth.user.username" class="h-full w-full object-cover" />
                 </div>
                 <div v-else class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand to-cyan-500 text-xs font-bold text-white">
                   {{ getInitials(auth.user?.username || 'U') }}
@@ -237,7 +244,7 @@ const getRoleBadge = (role: string) => {
                   <div class="border-b border-white/5 px-3 py-3 mb-2">
                     <div class="flex items-center gap-3">
                       <div v-if="auth.user?.avatarUrl" class="h-10 w-10 overflow-hidden rounded-lg ring-2 ring-white/10">
-                        <img :src="auth.user.avatarUrl" :alt="auth.user.username" class="h-full w-full object-cover" referrerpolicy="no-referrer" />
+                        <img :src="auth.user.avatarUrl" :alt="auth.user.username" class="h-full w-full object-cover" />
                       </div>
                       <div v-else class="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-brand to-cyan-500 text-sm font-bold text-white">
                         {{ getInitials(auth.user?.username || 'U') }}
@@ -297,7 +304,153 @@ const getRoleBadge = (role: string) => {
             Sign in
           </NuxtLink>
         </nav>
+
+        <!-- Mobile Navigation Controls -->
+        <div class="flex md:hidden items-center gap-2">
+          <!-- Mobile Wallet Balance (compact) -->
+          <div v-if="isHydrated && auth.isAuthenticated" class="flex items-center gap-1 rounded-lg bg-brand/10 px-2 py-1 border border-brand/20">
+            <svg class="h-3.5 w-3.5 text-brand-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-xs font-semibold text-brand-light">${{ (auth.user?.walletBalance ?? 0).toFixed(0) }}</span>
+          </div>
+
+          <!-- Mobile Cart -->
+          <NuxtLink
+            to="/cart"
+            class="relative rounded-lg p-2 text-slate-400 transition-all hover:bg-white/5 hover:text-white"
+            :class="{ 'bg-brand/10 text-brand-light': route.path.startsWith('/cart') }"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span
+              v-if="isHydrated && cart.items.length"
+              class="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[9px] font-bold text-white"
+            >
+              {{ cart.items.length }}
+            </span>
+          </NuxtLink>
+
+          <!-- Hamburger Menu Button -->
+          <button
+            @click="showMobileMenu = !showMobileMenu"
+            class="rounded-lg p-2 text-slate-400 transition-all hover:bg-white/5 hover:text-white"
+          >
+            <svg v-if="!showMobileMenu" class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <svg v-else class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
+
+      <!-- Mobile Menu Dropdown -->
+      <Transition
+        enter-active-class="transition ease-out duration-200"
+        enter-from-class="opacity-0 -translate-y-2"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition ease-in duration-150"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 -translate-y-2"
+      >
+        <div v-if="showMobileMenu" class="md:hidden border-t border-white/5 bg-slate-900/95 backdrop-blur-xl">
+          <div class="px-4 py-3 space-y-1">
+            <!-- User Info (if logged in) -->
+            <div v-if="isHydrated && auth.isAuthenticated" class="flex items-center gap-3 px-3 py-3 mb-2 rounded-lg bg-white/5">
+              <div v-if="auth.user?.avatarUrl" class="h-10 w-10 overflow-hidden rounded-lg ring-2 ring-white/10">
+                <img :src="auth.user.avatarUrl" :alt="auth.user.username" class="h-full w-full object-cover" />
+              </div>
+              <div v-else class="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-brand to-cyan-500 text-sm font-bold text-white">
+                {{ getInitials(auth.user?.username || 'U') }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-white truncate">{{ auth.user?.username }}</p>
+                <div class="flex items-center gap-2">
+                  <span 
+                    class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
+                    :class="getRoleBadge(auth.user?.role || 'user').class"
+                  >
+                    {{ getRoleBadge(auth.user?.role || 'user').text }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <template v-for="link in links" :key="link.to">
+              <NuxtLink
+                v-if="isHydrated && shouldShowLink(link)"
+                :to="link.to"
+                class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all"
+                :class="{ 
+                  'bg-brand/10 text-brand-light': isActiveLink(link.to),
+                  'text-slate-300 hover:bg-white/5 hover:text-white': !isActiveLink(link.to)
+                }"
+                @click="showMobileMenu = false"
+              >
+                <svg v-if="link.name === 'Catalog'" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                <svg v-else-if="link.name === 'Shop'" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                <svg v-else-if="link.name === 'Orders'" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <svg v-else-if="link.name === 'Sell'" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {{ link.name }}
+              </NuxtLink>
+            </template>
+
+            <!-- Admin Links (if admin) -->
+            <div v-if="isHydrated && auth.isAdmin" class="pt-2 mt-2 border-t border-white/5">
+              <p class="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Admin</p>
+              <NuxtLink
+                v-for="adminLink in adminLinks"
+                :key="adminLink.to"
+                :to="adminLink.to"
+                class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all"
+                :class="{
+                  'bg-rose-500/10 text-rose-300': route.path === adminLink.to,
+                  'text-slate-300 hover:bg-white/5 hover:text-white': route.path !== adminLink.to
+                }"
+                @click="showMobileMenu = false"
+              >
+                <span class="text-lg">{{ adminLink.icon }}</span>
+                {{ adminLink.name }}
+              </NuxtLink>
+            </div>
+
+            <!-- Auth Actions -->
+            <div class="pt-2 mt-2 border-t border-white/5">
+              <template v-if="isHydrated && auth.isAuthenticated">
+                <button
+                  @click="logout"
+                  class="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-slate-300 transition-colors hover:bg-rose-500/10 hover:text-rose-300"
+                >
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Sign out
+                </button>
+              </template>
+              <NuxtLink
+                v-else-if="isHydrated"
+                to="/login"
+                class="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand to-brand-dark px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand/25"
+                @click="showMobileMenu = false"
+              >
+                Sign in
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+      </Transition>
     </header>
 
     <main class="mx-auto max-w-7xl px-4 py-8">

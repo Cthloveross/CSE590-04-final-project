@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAsyncData } from 'nuxt/app'
+import { useAsyncData, useRequestFetch } from 'nuxt/app'
 import type { UserRole, AuthProvider } from '~/types/entities'
 
 declare const definePageMeta: (meta: Record<string, any>) => void
 
 definePageMeta({ middleware: ['auth', 'admin'] })
+
+// Use useRequestFetch to forward cookies during SSR
+const requestFetch = useRequestFetch()
 
 interface AdminUser {
   _id: string
@@ -19,8 +22,6 @@ interface AdminUser {
   updatedAt: string
 }
 
-const users = ref<AdminUser[]>([])
-const loading = ref(true)
 const message = ref('')
 const messageType = ref<'success' | 'error'>('success')
 const selectedRole = ref<'all' | UserRole>('all')
@@ -38,8 +39,22 @@ const providerIcons: Record<AuthProvider, string> = {
   github: '⚫',
 }
 
+const { data: users, status, refresh } = await useAsyncData('admin-users', async () => {
+  try {
+    return await requestFetch<AdminUser[]>('/api/admin/users')
+  } catch (err: any) {
+    message.value = err?.data?.message || err?.message || 'Unable to load users'
+    messageType.value = 'error'
+    throw err
+  }
+}, {
+  default: () => [] as AdminUser[],
+})
+
+const loading = computed(() => status.value === 'pending')
+
 const filteredUsers = computed(() => {
-  let result = users.value
+  let result = users.value ?? []
   
   // Filter by role
   if (selectedRole.value !== 'all') {
@@ -59,26 +74,13 @@ const filteredUsers = computed(() => {
   return result
 })
 
-const userStats = computed(() => ({
-  total: users.value.length,
-  admins: users.value.filter((u) => u.role === 'admin').length,
-  sellers: users.value.filter((u) => u.role === 'seller').length,
-  buyers: users.value.filter((u) => u.role === 'user').length,
-}))
-
-const { refresh } = await useAsyncData('admin-users', async () => {
-  loading.value = true
-  message.value = ''
-  try {
-    const response = await $fetch<AdminUser[]>('/api/admin/users')
-    users.value = response
-    return response
-  } catch (err: any) {
-    message.value = err?.data?.message || err?.message || 'Unable to load users'
-    messageType.value = 'error'
-    throw err
-  } finally {
-    loading.value = false
+const userStats = computed(() => {
+  const usersList = users.value ?? []
+  return {
+    total: usersList.length,
+    admins: usersList.filter((u) => u.role === 'admin').length,
+    sellers: usersList.filter((u) => u.role === 'seller').length,
+    buyers: usersList.filter((u) => u.role === 'user').length,
   }
 })
 

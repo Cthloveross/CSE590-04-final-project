@@ -1,8 +1,5 @@
 import { defineNuxtConfig } from 'nuxt/config'
 
-// Get site URL for OAuth redirects
-const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -23,16 +20,16 @@ export default defineNuxtConfig({
       google: {
         clientId: process.env.NUXT_OAUTH_GOOGLE_CLIENT_ID ?? '',
         clientSecret: process.env.NUXT_OAUTH_GOOGLE_CLIENT_SECRET ?? '',
-        redirectURL: `${siteUrl}/api/auth/callback/google`,
+        redirectURL: process.env.NUXT_OAUTH_GOOGLE_REDIRECT_URL ?? 'http://localhost:3000/api/auth/callback/google',
       },
       github: {
         clientId: process.env.NUXT_OAUTH_GITHUB_CLIENT_ID ?? '',
         clientSecret: process.env.NUXT_OAUTH_GITHUB_CLIENT_SECRET ?? '',
-        redirectURL: `${siteUrl}/api/auth/callback/github`,
+        redirectURL: process.env.NUXT_OAUTH_GITHUB_REDIRECT_URL ?? 'http://localhost:3000/api/auth/callback/github',
       },
     },
     public: {
-      siteUrl: siteUrl,
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
       socketUrl: process.env.NUXT_PUBLIC_SOCKET_URL ?? 'http://localhost:3001',
     },
   },

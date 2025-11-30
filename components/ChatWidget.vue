@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-widget fixed bottom-20 right-4 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-40">
+  <div class="chat-widget fixed bottom-20 right-4 w-96 bg-slate-900 rounded-lg shadow-2xl border border-white/10 overflow-hidden z-40">
     <!-- Header -->
     <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 flex items-center justify-between">
       <div class="flex items-center space-x-2">
@@ -19,8 +19,8 @@
     </div>
 
     <!-- Messages -->
-    <div ref="messagesContainer" class="h-96 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900">
-      <div v-if="chatMessages.length === 0" class="text-center text-gray-500 mt-8">
+    <div ref="messagesContainer" class="h-96 overflow-y-auto p-4 space-y-3 bg-slate-950">
+      <div v-if="chatMessages.length === 0" class="text-center text-slate-500 mt-8">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
@@ -41,7 +41,7 @@
             'max-w-xs rounded-lg p-3 shadow',
             msg.username === authStore.user?.username
               ? 'bg-blue-500 text-white'
-              : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+              : 'bg-slate-800 text-white'
           ]"
         >
           <p class="text-xs font-semibold mb-1 opacity-75">{{ msg.username }}</p>
@@ -52,8 +52,8 @@
     </div>
 
     <!-- Input -->
-    <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-      <div v-if="!authStore.user" class="text-center text-gray-500 py-2">
+    <div class="p-4 border-t border-white/10 bg-slate-900">
+      <div v-if="!authStore.user" class="text-center text-slate-500 py-2">
         <p class="text-sm">Please <NuxtLink to="/login" class="text-blue-500 hover:underline">login</NuxtLink> to chat</p>
       </div>
       <div v-else class="flex space-x-2">
@@ -63,7 +63,7 @@
           @input="handleTyping"
           type="text"
           placeholder="Type a message..."
-          class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+          class="flex-1 px-4 py-2 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-800 text-white placeholder-slate-500"
         />
         <button
           @click="sendMessage"

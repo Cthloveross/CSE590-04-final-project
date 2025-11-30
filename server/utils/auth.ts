@@ -29,15 +29,10 @@ export const setAuthCookie = (event: H3Event, userId: string, role: string) => {
   const config = useRuntimeConfig()
   const expiresIn = config.jwtExpiresIn || '7d'
   const token = signJwt({ sub: userId, role }, expiresIn)
-
-  // Only set secure=true if using HTTPS (not localhost)
-  const siteUrl = config.public?.siteUrl || ''
-  const isHttps = siteUrl.startsWith('https://')
-
   setCookie(event, TOKEN_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: isHttps, // Safari requires HTTPS for secure cookies
+    secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,
   })

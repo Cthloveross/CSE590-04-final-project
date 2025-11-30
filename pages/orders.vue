@@ -1,30 +1,30 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useAsyncData } from 'nuxt/app'
+import { useAsyncData, useRequestFetch } from 'nuxt/app'
 import type { Order } from '~/types/entities'
 
 declare const definePageMeta: (meta: Record<string, any>) => void
 
 definePageMeta({ middleware: 'auth' })
 
-const orders = ref<Order[]>([])
-const loading = ref(true)
 const errorMessage = ref('')
 
-const { refresh } = await useAsyncData('orders', async () => {
-  loading.value = true
-  errorMessage.value = ''
+// Use useRequestFetch to forward cookies during SSR
+const requestFetch = useRequestFetch()
+
+const { data: orders, status, refresh, error } = await useAsyncData('orders', async () => {
   try {
-    const response = await $fetch<Order[]>('/api/orders')
-    orders.value = response
-    return response
+    return await requestFetch<Order[]>('/api/orders')
   } catch (err: any) {
     errorMessage.value = err?.data?.message || err?.message || 'Unable to load orders'
     throw err
-  } finally {
-    loading.value = false
   }
+}, {
+  default: () => [] as Order[],
 })
+
+// Computed loading state from useAsyncData status
+const loading = computed(() => status.value === 'pending')
 
 // Listen for real-time order status updates via useSocket composable
 const { on, off } = useSocket()
@@ -33,8 +33,9 @@ const authStore = useAuthStore()
 function handleOrderStatusUpdate(data: { orderId: string; status: string; userId?: string }) {
   console.log('📦 Order status updated in orders page:', data)
   // Find and update the order in the list
-  const orderIndex = orders.value.findIndex(o => o._id === data.orderId)
-  if (orderIndex !== -1) {
+  const ordersList = orders.value ?? []
+  const orderIndex = ordersList.findIndex(o => o._id === data.orderId)
+  if (orderIndex !== -1 && orders.value) {
     orders.value[orderIndex] = {
       ...orders.value[orderIndex],
       status: data.status as Order['status']
@@ -79,7 +80,7 @@ const statusMeta: Record<string, { label: string; color: string }> = {
   cancelled: { label: 'Cancelled', color: 'bg-rose-500/20 text-rose-200' },
 }
 
-const hasOrders = computed(() => orders.value.length > 0)
+const hasOrders = computed(() => (orders.value?.length ?? 0) > 0)
 </script>
 
 <template>
