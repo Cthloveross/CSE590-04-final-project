@@ -23,9 +23,9 @@ export default defineEventHandler(async (event) => {
   }
   const created = await ServiceModel.create(servicePayload)
   const service = toService(created)
-  
+
   // Emit Socket.IO event for new service
   emitNewService(service)
-  
+
   return service
 })

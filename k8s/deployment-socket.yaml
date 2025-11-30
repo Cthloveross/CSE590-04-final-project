@@ -1,4 +1,4 @@
-# Kubernetes Deployment for the Socket.IO Server
+# Kubernetes Deployment for the Socket.IO Server (Scale-out with Redis Adapter)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,7 +8,7 @@ metadata:
     app: gaming-platform
     component: socket
 spec:
-  replicas: 1  # Socket.IO needs sticky sessions, keep at 1 or use Redis adapter
+  replicas: 2  # Scale-out enabled with Redis Adapter
   selector:
     matchLabels:
       app: gaming-platform
@@ -38,6 +38,8 @@ spec:
                 configMapKeyRef:
                   name: gaming-platform-config
                   key: NUXT_PUBLIC_SITE_URL
+            - name: REDIS_URL
+              value: "redis://gaming-platform-redis:6379"
           resources:
             requests:
               memory: "128Mi"

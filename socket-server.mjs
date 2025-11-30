@@ -1,8 +1,11 @@
 import { createServer } from 'http'
 import { Server } from 'socket.io'
+import { createAdapter } from '@socket.io/redis-adapter'
+import { createClient } from 'redis'
 
 const PORT = process.env.SOCKET_PORT || 3001
 const CORS_ORIGIN = process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379'
 
 const httpServer = createServer()
 const io = new Server(httpServer, {
@@ -14,16 +17,39 @@ const io = new Server(httpServer, {
   transports: ['websocket', 'polling'],
 })
 
+// Redis Adapter for Scale-out (multiple Socket.IO instances)
+async function setupRedisAdapter() {
+  try {
+    const pubClient = createClient({ url: REDIS_URL })
+    const subClient = pubClient.duplicate()
+
+    pubClient.on('error', (err) => console.log('Redis Pub Client Error:', err.message))
+    subClient.on('error', (err) => console.log('Redis Sub Client Error:', err.message))
+
+    await Promise.all([pubClient.connect(), subClient.connect()])
+
+    io.adapter(createAdapter(pubClient, subClient))
+    console.log(`✅ Redis Adapter connected: ${REDIS_URL}`)
+    return true
+  } catch (error) {
+    console.log(`⚠️ Redis not available (${error.message}), running in single-instance mode`)
+    return false
+  }
+}
+
+// Setup Redis adapter (non-blocking, falls back to single instance if Redis unavailable)
+setupRedisAdapter()
+
 const onlineUsers = new Map()
-const chatHistory = [] // Store last 100 messages
+const chatHistory = [] // Store last 100 messages (Note: in scale-out mode, use Redis for shared state)
 
 io.on('connection', (socket) => {
   console.log(`✅ Client connected: ${socket.id}`)
   onlineUsers.set(socket.id, { socketId: socket.id })
-  
+
   // Broadcast online count
   io.emit('users:online', { count: onlineUsers.size })
-  
+
   // Send chat history to new user
   if (chatHistory.length > 0) {
     socket.emit('chat:history', chatHistory)
@@ -88,7 +114,7 @@ io.on('connection', (socket) => {
   })
 
   // ========== Server-side events (from Nuxt API) ==========
-  
+
   // Order status update from server
   socket.on('server:order_status_update', (data) => {
     console.log(`📦 Server: Order ${data.orderId} status: ${data.status} for user ${data.userId}`)
