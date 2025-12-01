@@ -29,14 +29,17 @@ export default defineEventHandler(async (event) => {
 
   const payload = await parseBody(event, addStockSchema)
 
-  const service = await ServiceModel.findById(serviceId)
+  // ATOMIC: Use findOneAndUpdate with $inc to prevent race conditions
+  // This ensures concurrent requests don't cause lost updates
+  const service = await ServiceModel.findOneAndUpdate(
+    { _id: serviceId },
+    { $inc: { stockQuantity: payload.quantity } },
+    { new: true }
+  ).populate('gameId')
+
   if (!service) {
     throw createError({ statusCode: 404, statusMessage: 'Service not found' })
   }
-
-  // Add stock quantity
-  service.stockQuantity += payload.quantity
-  await service.save()
 
   // Emit real-time stock update
   emitStockUpdate(serviceId, service.stockQuantity)

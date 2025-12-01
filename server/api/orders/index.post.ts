@@ -45,13 +45,24 @@ export default defineEventHandler(async (event) => {
 
   const totalPrice = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
-  // Check user has sufficient balance
-  const userDoc = await UserModel.findById(user._id)
-  if (!userDoc) {
-    throw createError({ statusCode: 401, statusMessage: 'User not found' })
-  }
-  if (userDoc.walletBalance < totalPrice) {
-    throw createError({ statusCode: 400, statusMessage: `Insufficient balance. You have $${userDoc.walletBalance}, but need $${totalPrice}` })
+  // ATOMIC: Deduct wallet balance with condition check in single operation
+  // This prevents race condition where two orders could overdraft the wallet
+  const updatedUser = await UserModel.findOneAndUpdate(
+    { _id: user._id, walletBalance: { $gte: totalPrice } },
+    { $inc: { walletBalance: -totalPrice } },
+    { new: true }
+  )
+
+  if (!updatedUser) {
+    // Either user not found or insufficient balance
+    const userDoc = await UserModel.findById(user._id)
+    if (!userDoc) {
+      throw createError({ statusCode: 401, statusMessage: 'User not found' })
+    }
+    throw createError({ 
+      statusCode: 400, 
+      statusMessage: `Insufficient balance. You have $${userDoc.walletBalance}, but need $${totalPrice}` 
+    })
   }
 
   // Atomically decrement stock for each service and check availability
@@ -73,8 +84,7 @@ export default defineEventHandler(async (event) => {
     emitStockUpdate(serviceId, stockQuantity)
   }
 
-  // Deduct wallet balance
-  await UserModel.findByIdAndUpdate(user._id, { $inc: { walletBalance: -totalPrice } })
+  // Wallet balance already deducted atomically above
 
   const order = await OrderModel.create({
     userId: user._id,
