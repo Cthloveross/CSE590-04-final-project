@@ -1,4 +1,4 @@
-import { createError, deleteCookie, getCookie, H3Event, setCookie } from 'h3'
+import { createError, deleteCookie, getCookie, getRequestHost, H3Event, setCookie } from 'h3'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 
@@ -29,10 +29,16 @@ export const setAuthCookie = (event: H3Event, userId: string, role: string) => {
   const config = useRuntimeConfig()
   const expiresIn = config.jwtExpiresIn || '7d'
   const token = signJwt({ sub: userId, role }, expiresIn)
+
+  // Check if we're on localhost (for development/K8s local testing)
+  const host = getRequestHost(event) || ''
+  const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1')
+
   setCookie(event, TOKEN_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    // Don't set secure on localhost (even in production mode) for Safari compatibility
+    secure: !isLocalhost && process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,
   })
